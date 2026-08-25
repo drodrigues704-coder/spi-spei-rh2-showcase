@@ -1,4 +1,4 @@
-# SPI/SPEI RH2 — Monitorização de Seca Meteorológica
+# SPI/SPEI/scPDSI RH2 — Monitorização de Seca Meteorológica
 
 **[Ver a demo →](https://drodrigues704-coder.github.io/spi-spei-rh2-showcase/)**
 
