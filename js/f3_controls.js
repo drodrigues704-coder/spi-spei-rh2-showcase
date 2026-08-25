@@ -21,6 +21,7 @@ const ControlsModule = (() => {
   const el = {
     station: document.getElementById("ctl-station"),
     stationMeta: document.getElementById("station-meta"),
+    chartSource: document.getElementsByName("chart-source"),
     index: document.getElementById("ctl-index"),
     scale: document.getElementById("ctl-scale"),
     rasterMode: document.getElementsByName("raster-mode"),
@@ -39,6 +40,19 @@ const ControlsModule = (() => {
 
   function getSelectedStation() {
     return el.station.value;
+  }
+
+  // "station" (omissão) — o gráfico mostra a série da estação
+  // selecionada acima, como sempre. "rh2" — mostra a média das 40
+  // estações em vez disso (série pré-calculada no pipeline,
+  // RH2_MEDIA.json — pedido do dono do projeto, ver
+  // n4_PROJECT_REFERENCE.md §23), independente da estação selecionada
+  // (que continua a controlar o mapa/marcadores normalmente).
+  function getChartSource() {
+    for (const radio of el.chartSource) {
+      if (radio.checked) return radio.value; // "station" | "rh2"
+    }
+    return "station";
   }
 
   function setStationMeta(station) {
@@ -159,6 +173,7 @@ const ControlsModule = (() => {
     populateStations,
     getSelectedStation,
     setStationMeta,
+    getChartSource,
     getSelectedIndex,
     getSelectedVariable,
     getChartIndex,

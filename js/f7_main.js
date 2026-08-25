@@ -17,6 +17,7 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
 
 (function main() {
   let currentSeries = null;
+  let rh2Series = null; // série global (RH2_MEDIA.json, §23) — carregada 1x, independente da estação selecionada
   let playTimer = null;
   let currentMonthlyDates = []; // [{date, url}, ...] da variável/escala mensal atualmente carregada
   let currentVariable = "risco"; // "risco" | "spi" | "spei" — o que o raster atual representa (legenda + tooltip)
@@ -102,14 +103,21 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
   }
 
   function renderChart() {
-    if (!currentSeries) return;
-    const station = ControlsModule.getSelectedStation();
+    // "RH2 (média)" (§23) — série global pré-calculada, independente da
+    // estação selecionada (essa continua a controlar só o mapa). Se
+    // ainda não chegou (pedido em paralelo no init(), pode não estar
+    // pronta mesmo assim), não desenha nada em vez de mostrar dados de
+    // outra série por engano.
+    const source = ControlsModule.getChartSource();
+    const series = source === "rh2" ? rh2Series : currentSeries;
+    if (!series) return;
+    const station = source === "rh2" ? "RH2 (média)" : ControlsModule.getSelectedStation();
     // "risco_spi"/"risco_pdsi" não têm série própria (são um resumo
     // estático, §22) — getChartIndex() mostra antes a série do índice
     // que alimenta o composto (ver f3_controls.js).
     const index = ControlsModule.getChartIndex();
     const scale = ControlsModule.getSelectedScale();
-    ChartsModule.render(station, currentSeries, index, scale);
+    ChartsModule.render(station, series, index, scale);
   }
 
   async function loadRaster() {
@@ -231,6 +239,12 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
     ControlsModule.el.bandSlider.addEventListener("input", onBandSliderInput);
     ControlsModule.el.playButton.addEventListener("click", togglePlayback);
 
+    // "Esta estação" / "RH2 (média)" (§23) — só afeta o gráfico, o mapa
+    // continua a seguir sempre a estação selecionada em "Estação".
+    for (const radio of ControlsModule.el.chartSource) {
+      radio.addEventListener("change", renderChart);
+    }
+
     document.getElementById("btn-basemap").addEventListener("click", () => {
       const label = MapModule.cycleBasemap();
       document.getElementById("btn-basemap").textContent = `🗺 Mapa: ${label}`;
@@ -256,6 +270,17 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
       UIModule.showError(`Falha ao iniciar a aplicação: ${err.message}`);
     } finally {
       UIModule.hideLoading();
+    }
+
+    // Série global (§23) — carregada à parte, sem bloquear o arranque
+    // nem mostrar o overlay de "a carregar": só é preciso se/quando o
+    // utilizador ligar "RH2 (média)"; uma falha aqui não deve impedir o
+    // resto da app de funcionar.
+    try {
+      rh2Series = await apiGet("/series/RH2_MEDIA");
+      if (ControlsModule.getChartSource() === "rh2") renderChart();
+    } catch (err) {
+      console.error("Falha ao carregar a série global RH2 (média):", err.message);
     }
   }
 

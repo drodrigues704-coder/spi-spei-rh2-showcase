@@ -35,7 +35,7 @@
             <option value="spi">SPI</option>
             <option value="spei">SPEI</option>
             <option value="pdsi">scPDSI</option>
-            <option value="risco_mensal">Risco (composto)</option>
+            <option value="risco_mensal">Risco composto — SPEI</option>
             <option value="risco_spi">Risco composto — SPI</option>
             <option value="risco_pdsi">Risco composto — scPDSI</option>
           </select>
@@ -56,6 +56,10 @@
         estação) como o mapa espacial em "Evolução mensal" — mudar um
         muda os dois.
       </p>
+      <div class="row">
+        <label><input type="radio" name="chart-source" value="station" checked> Esta estação</label>
+        <label><input type="radio" name="chart-source" value="rh2"> RH2 (média)</label>
+      </div>
       <canvas id="chart-series" height="220"></canvas>
     </section>
 
@@ -101,8 +105,8 @@
       do Cávado, Ave e Leça (noroeste de Portugal Continental), a partir de
       40 estações udométricas/climatológicas. Mostra a evolução de três
       índices de seca reconhecidos internacionalmente (SPI, SPEI e scPDSI)
-      por estação e escala temporal, e um mapa do risco de seca interpolado
-      espacialmente entre estações.
+      por estação (ou a média das 40, "RH2 (média)") e escala temporal, e
+      um mapa do risco de seca interpolado espacialmente entre estações.
     </p>
     <p>
       Tanto o <b>SPI</b> como o <b>SPEI</b> e o <b>mapa de risco</b>
@@ -160,7 +164,7 @@
     <p>
       O modo <b>"Climatológico"</b> mostra a média/frequência de longo
       prazo (1995–2025) do que estiver selecionado em "Índice": para o
-      <b>Risco (composto)</b>, o índice composto (frequência, severidade,
+      <b>Risco composto — SPEI</b>, o índice composto (frequência, severidade,
       recorrência e tendência da seca, 0 a 1) a partir do SPEI na escala
       escolhida — a escala 48 dá exatamente o mesmo valor que os
       marcadores das estações (a referência fixa, ver abaixo). Para
@@ -180,7 +184,7 @@
     <p>
       O SPEI-48 sozinho só capta risco estrutural/hidrológico de longo
       prazo e pode esconder secas curtas e frequentes numa estação que
-      pareça "saudável" a 48 meses — por isso o <b>Risco (composto)</b>
+      pareça "saudável" a 48 meses — por isso o <b>Risco composto — SPEI</b>
       no modo Climatológico já respeita a Escala escolhida (acima), em
       vez de ficar preso aos 48 meses. As opções <b>"Risco composto —
       SPI/scPDSI"</b> dão a mesma leitura a partir de outro índice. Só
@@ -216,13 +220,13 @@
      isto, uma alteração a estes scripts só aparecia depois de o
      utilizador limpar a cache manualmente. Subir este número sempre
      que qualquer um destes ficheiros for alterado. -->
-<script src="js/f1_config.js?v=11"></script>
-<script src="js/f2_map.js?v=11"></script>
-<script src="js/f3_controls.js?v=11"></script>
-<script src="js/f4_raster.js?v=11"></script>
-<script src="js/f5_charts.js?v=11"></script>
-<script src="js/f6_ui.js?v=11"></script>
-<script src="js/f7_main.js?v=11"></script>
+<script src="js/f1_config.js?v=12"></script>
+<script src="js/f2_map.js?v=12"></script>
+<script src="js/f3_controls.js?v=12"></script>
+<script src="js/f4_raster.js?v=12"></script>
+<script src="js/f5_charts.js?v=12"></script>
+<script src="js/f6_ui.js?v=12"></script>
+<script src="js/f7_main.js?v=12"></script>
 
 </body>
 </html>
