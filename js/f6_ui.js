@@ -54,15 +54,21 @@ const UIModule = (() => {
     if (mode === "static") {
       // Climatológico de SPI/SPEI/PDSI — frequência de seca (%), rampa
       // sequencial, não divergente (ver §18 — a média bruta do índice é
-      // ~0 por construção, sem sinal espacial).
-      const stops = APP.FREQ_COLOR_STOPS;
-      const span = APP.FREQ_VALUE_MAX - APP.FREQ_VALUE_MIN;
+      // ~0 por construção, sem sinal espacial). scPDSI usa a sua própria
+      // escala (0-80%, não 0-30%): tem memória/autocorrelação (ao
+      // contrário do SPI/SPEI, ~independentes mês a mês), por isso fica
+      // muito mais tempo consecutivo em seca uma vez que lá entra — ver
+      // p1_config.py e n4_PROJECT_REFERENCE.md §21.
+      const stops = variable === "pdsi" ? APP.PDSI_FREQ_COLOR_STOPS : APP.FREQ_COLOR_STOPS;
+      const freqMax = variable === "pdsi" ? APP.PDSI_FREQ_VALUE_MAX : APP.FREQ_VALUE_MAX;
+      const freqMin = variable === "pdsi" ? APP.PDSI_FREQ_VALUE_MIN : APP.FREQ_VALUE_MIN;
+      const span = freqMax - freqMin;
       const gradient = stops
-        .map((s) => `rgb(${s.color.join(",")}) ${((s.at - APP.FREQ_VALUE_MIN) / span) * 100}%`)
+        .map((s) => `rgb(${s.color.join(",")}) ${((s.at - freqMin) / span) * 100}%`)
         .join(", ");
       legendEl.innerHTML = `
         <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
-        <div class="legend-labels"><span>0%</span><span>${label}: % de meses em seca</span><span>${APP.FREQ_VALUE_MAX * 100}%+</span></div>
+        <div class="legend-labels"><span>0%</span><span>${label}: % de meses em seca</span><span>${freqMax * 100}%+</span></div>
       `;
       return;
     }

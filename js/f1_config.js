@@ -88,6 +88,20 @@ const APP = {
   FREQ_VALUE_MIN: 0.0,
   FREQ_VALUE_MAX: 0.3,
 
+  // Mesma rampa "% de meses em seca" acima, mas só para o scPDSI — não
+  // dá para partilhar FREQ_VALUE_MAX=0.3 com o SPI/SPEI (memória/
+  // autocorrelação do scPDSI, gama observada até 73% — ver p1_config.py
+  // e n4_PROJECT_REFERENCE.md §21). Espelha p1_config.py →
+  // PDSI_FREQ_COLOR_STOPS.
+  PDSI_FREQ_COLOR_STOPS: [
+    { at: 0.0, color: [255, 255, 229] },
+    { at: 0.2667, color: [254, 217, 118] },
+    { at: 0.5333, color: [240, 59, 32] },
+    { at: 0.8, color: [127, 29, 29] },
+  ],
+  PDSI_FREQ_VALUE_MIN: 0.0,
+  PDSI_FREQ_VALUE_MAX: 0.8,
+
   // Centro/zoom inicial do mapa — ajustado automaticamente ao contorno da
   // RH2 quando este carrega (ver f2_map.js); isto é só o estado inicial.
   MAP_CENTER: [41.55, -8.42],
