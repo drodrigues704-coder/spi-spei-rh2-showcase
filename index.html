@@ -36,6 +36,9 @@
             <option value="spei">SPEI</option>
             <option value="pdsi">scPDSI</option>
             <option value="risco_mensal">Risco (composto)</option>
+            <option value="risco_spei">Risco composto — SPEI</option>
+            <option value="risco_spi">Risco composto — SPI</option>
+            <option value="risco_pdsi">Risco composto — scPDSI</option>
           </select>
         </label>
         <label>Escala
@@ -158,18 +161,35 @@
     <p>
       O modo <b>"Climatológico"</b> mostra a média/frequência de longo
       prazo (1995–2025) do que estiver selecionado em "Índice": para o
-      <b>Risco</b>, o índice composto (frequência, severidade,
-      recorrência e tendência da seca, 0 a 1) — não é o risco atual. Para
-      <b>SPI</b>/<b>SPEI</b>/<b>scPDSI</b>, a <b>% de meses em seca</b>
-      (não a média bruta do índice, que é sempre ~0 por construção e não
-      distingue zonas). O modo <b>"Evolução mensal"</b> interpola
-      espacialmente, mês a mês, o valor real do índice selecionado (o
-      scPDSI não tem escala — o seletor "Escala" fica sem efeito). A
-      superfície é interpolada por <b>IDW</b> a partir de 40 estações e
-      desenhada como <b>isobandas</b> (áreas coloridas entre limiares,
-      não pixels) — é uma estimativa aproximada entre estações, não uma
-      medição contínua; fora do contorno da RH2, os dados não são
-      mostrados.
+      <b>Risco (composto)</b>, o índice composto de referência
+      (frequência, severidade, recorrência e tendência da seca, 0 a 1,
+      sempre a partir do SPEI-48 — o mesmo valor dos marcadores das
+      estações). Para <b>SPI</b>/<b>SPEI</b>/<b>scPDSI</b>, a <b>% de
+      meses em seca</b> (não a média bruta do índice, que é sempre ~0
+      por construção e não distingue zonas). O modo <b>"Evolução
+      mensal"</b> interpola espacialmente, mês a mês, o valor real do
+      índice selecionado (o scPDSI não tem escala — o seletor "Escala"
+      fica sem efeito). A superfície é interpolada por <b>IDW</b> a
+      partir de 40 estações e desenhada como <b>isobandas</b> (áreas
+      coloridas entre limiares, não pixels) — é uma estimativa
+      aproximada entre estações, não uma medição contínua; fora do
+      contorno da RH2, os dados não são mostrados.
+    </p>
+
+    <h3>Risco composto por índice/escala</h3>
+    <p>
+      As 3 opções <b>"Risco composto — SPEI/SPI/scPDSI"</b> são o mesmo
+      índice de risco (frequência+severidade+recorrência+tendência),
+      mas calculado para cada combinação de índice e escala, em vez de
+      fixo no SPEI-48 — o SPEI-48 sozinho só capta risco
+      estrutural/hidrológico de longo prazo e pode esconder secas
+      curtas e frequentes numa estação que pareça "saudável" a 48
+      meses. Só existem no modo <b>"Climatológico"</b> (são um resumo
+      estático, sem evolução mês a mês própria) — o gráfico mostra, em
+      alternativa, a série do índice que alimenta esse risco (SPEI, SPI
+      ou scPDSI). O <b>Risco (composto)</b> original (marcadores das
+      estações e a opção sem sufixo) mantém-se inalterado, sempre
+      SPEI-48.
     </p>
 
     <h3>Limitações a ter em conta</h3>
@@ -196,13 +216,13 @@
      isto, uma alteração a estes scripts só aparecia depois de o
      utilizador limpar a cache manualmente. Subir este número sempre
      que qualquer um destes ficheiros for alterado. -->
-<script src="js/f1_config.js?v=9"></script>
-<script src="js/f2_map.js?v=9"></script>
-<script src="js/f3_controls.js?v=9"></script>
-<script src="js/f4_raster.js?v=9"></script>
-<script src="js/f5_charts.js?v=9"></script>
-<script src="js/f6_ui.js?v=9"></script>
-<script src="js/f7_main.js?v=9"></script>
+<script src="js/f1_config.js?v=10"></script>
+<script src="js/f2_map.js?v=10"></script>
+<script src="js/f3_controls.js?v=10"></script>
+<script src="js/f4_raster.js?v=10"></script>
+<script src="js/f5_charts.js?v=10"></script>
+<script src="js/f6_ui.js?v=10"></script>
+<script src="js/f7_main.js?v=10"></script>
 
 </body>
 </html>

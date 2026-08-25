@@ -104,7 +104,10 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
   function renderChart() {
     if (!currentSeries) return;
     const station = ControlsModule.getSelectedStation();
-    const index = ControlsModule.getSelectedIndex();
+    // "risco_spei"/"risco_spi"/"risco_pdsi" não têm série própria (são
+    // um resumo estático, §22) — getChartIndex() mostra antes a série
+    // do índice que alimenta o composto (ver f3_controls.js).
+    const index = ControlsModule.getChartIndex();
     const scale = ControlsModule.getSelectedScale();
     ChartsModule.render(station, currentSeries, index, scale);
   }
@@ -208,6 +211,7 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
     // selecionada — loadRaster() já sabe resolver os dois casos).
     function onIndexOrScaleChange() {
       ControlsModule.updateScaleAvailability(); // scPDSI não tem escala — ver f3_controls.js
+      ControlsModule.updateRasterModeAvailability(); // Risco composto (§22) só tem "Climatológico"
       renderChart();
       loadRaster();
     }

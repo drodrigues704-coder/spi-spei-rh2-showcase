@@ -68,13 +68,17 @@ const RasterModule = (() => {
   }
 
   // Texto do tooltip de cada polígono — depende da variável e de
-  // "mode": "risco" fica sempre 0-1; SPI/SPEI mensal ("monthly") mostra
-  // o valor do índice (-3..3); SPI/SPEI climatológico ("static") mostra
-  // frequência de seca em % (o value_min/value_max do GeoJSON são
-  // frações 0-1, multiplicadas por 100 aqui só para o texto).
+  // "mode": "risco"/"risco_spei"/"risco_spi"/"risco_pdsi" ficam sempre
+  // 0-1 (Índice de Risco composto, §22 — só existem em modo "static");
+  // SPI/SPEI/PDSI mensal ("monthly") mostra o valor do índice; SPI/
+  // SPEI/PDSI climatológico ("static") mostra frequência de seca em %
+  // (o value_min/value_max do GeoJSON são frações 0-1, multiplicadas
+  // por 100 aqui só para o texto).
+  const RISCO_COMPOSTO_LABELS = { risco: "Risco", risco_spei: "Risco (SPEI)", risco_spi: "Risco (SPI)", risco_pdsi: "Risco (scPDSI)" };
+
   function tooltipText(feature, variable, mode) {
     const { value_min, value_max } = feature.properties;
-    if (variable === "risco") return `Risco: ${value_min.toFixed(2)} – ${value_max.toFixed(2)}`;
+    if (variable in RISCO_COMPOSTO_LABELS) return `${RISCO_COMPOSTO_LABELS[variable]}: ${value_min.toFixed(2)} – ${value_max.toFixed(2)}`;
     const label = { spi: "SPI", spei: "SPEI", pdsi: "scPDSI" }[variable] || variable;
     if (mode === "static") return `${label} seca: ${(value_min * 100).toFixed(0)}% – ${(value_max * 100).toFixed(0)}%`;
     return `${label}: ${value_min.toFixed(2)} – ${value_max.toFixed(2)}`;

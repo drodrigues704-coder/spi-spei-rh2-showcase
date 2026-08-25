@@ -56,31 +56,74 @@ const ControlsModule = (() => {
     `;
   }
 
+  // "risco_spei"/"risco_spi"/"risco_pdsi" — Índice de Risco composto
+  // por índice/escala (§22), adicional ao "risco_mensal" de sempre
+  // (SPEI-48 fixo nos marcadores + evolução mensal por escala,
+  // inalterado). Só existem em modo "static" (climatológico) — não têm
+  // evolução mensal própria, ver updateRasterModeAvailability() abaixo.
+  const RISCO_COMPOSTO_INDICES = ["risco_spei", "risco_spi", "risco_pdsi"];
+
   function getSelectedIndex() {
-    return el.index.value; // "spi" | "spei" | "pdsi" | "risco_mensal"
+    return el.index.value; // "spi" | "spei" | "pdsi" | "risco_mensal" | "risco_spei" | "risco_spi" | "risco_pdsi"
   }
 
   // O mapa fala de "risco" (a API é /raster/monthly/{risco|spi|spei|pdsi}/{escala}),
   // o gráfico/séries falam de "risco_mensal" (a mesma chave de
-  // data/series/<estação>.json) — única tradução entre os dois vocabulários.
+  // data/series/<estação>.json) — única tradução entre os dois
+  // vocabulários. "risco_spei"/"risco_spi"/"risco_pdsi" não precisam de
+  // tradução — já são a própria chave usada em
+  // catalog.json → raster_static_index (ver run_pipeline.py §22).
   function getSelectedVariable() {
     const index = getSelectedIndex();
     return index === "risco_mensal" ? "risco" : index;
   }
 
+  // O gráfico não tem uma série própria para "risco_spei"/"risco_spi"/
+  // "risco_pdsi" (são um resumo estático, não uma série mensal) — mostra
+  // antes a série do índice que alimenta o composto (SPEI/SPI/scPDSI),
+  // que já existe e dá contexto útil sobre o que está a gerar aquele
+  // risco. "risco_mensal" continua a mostrar a sua própria série.
+  function getChartIndex() {
+    const index = getSelectedIndex();
+    if (index === "risco_spei") return "spei";
+    if (index === "risco_spi") return "spi";
+    if (index === "risco_pdsi") return "pdsi";
+    return index;
+  }
+
   // scPDSI não tem escalas (é inerentemente mensal, sem acumulação —
   // ver p1_config.py::PDSI_SCALES e n4_PROJECT_REFERENCE.md §21) — a
-  // API só tem a combinação pdsi/1. Ignora o que estiver selecionado no
-  // seletor de Escala e força 1, em vez de deixar pedir uma escala que
-  // não existe (404). `updateScaleAvailability()` também desativa
-  // visualmente o seletor, para não sugerir uma escolha sem efeito.
+  // API só tem a combinação pdsi/1 (e, pela mesma razão, risco_pdsi/1).
+  // Ignora o que estiver selecionado no seletor de Escala e força 1, em
+  // vez de deixar pedir uma escala que não existe (404).
+  // `updateScaleAvailability()` também desativa visualmente o seletor,
+  // para não sugerir uma escolha sem efeito.
   function getSelectedScale() {
-    if (getSelectedIndex() === "pdsi") return 1;
+    if (getSelectedIndex() === "pdsi" || getSelectedIndex() === "risco_pdsi") return 1;
     return parseInt(el.scale.value, 10);
   }
 
   function updateScaleAvailability() {
-    el.scale.disabled = getSelectedIndex() === "pdsi";
+    const index = getSelectedIndex();
+    el.scale.disabled = index === "pdsi" || index === "risco_pdsi";
+  }
+
+  // "risco_spei"/"risco_spi"/"risco_pdsi" só existem em modo "static"
+  // (climatológico) — não há raster mensal próprio para eles (§22).
+  // Desativa visualmente o rádio "Evolução mensal" e força "static" se
+  // estava selecionado, em vez de deixar pedir uma combinação que não
+  // existe (404) — mesmo espírito de updateScaleAvailability() acima.
+  function updateRasterModeAvailability() {
+    const isRiscoComposto = RISCO_COMPOSTO_INDICES.includes(getSelectedIndex());
+    for (const radio of el.rasterMode) {
+      radio.disabled = isRiscoComposto && radio.value === "monthly";
+    }
+    if (isRiscoComposto && getRasterMode() === "monthly") {
+      for (const radio of el.rasterMode) {
+        if (radio.value === "static") radio.checked = true;
+      }
+      updateMonthlyControlsVisibility();
+    }
   }
 
   function getRasterMode() {
@@ -114,8 +157,10 @@ const ControlsModule = (() => {
     setStationMeta,
     getSelectedIndex,
     getSelectedVariable,
+    getChartIndex,
     getSelectedScale,
     updateScaleAvailability,
+    updateRasterModeAvailability,
     getRasterMode,
     updateMonthlyControlsVisibility,
     setBandRange,

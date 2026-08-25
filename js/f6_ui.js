@@ -37,13 +37,23 @@ const UIModule = (() => {
     setTimeout(() => (errorBanner.hidden = true), 6000);
   }
 
+  // "risco" é o Risco de referência (SPEI-48 fixo — marcadores/mapa
+  // "Risco (composto)" de sempre); "risco_spei"/"risco_spi"/
+  // "risco_pdsi" são o mesmo composto (frequência+severidade+
+  // recorrência+tendência), mas por índice/escala (§22) — mesma rampa
+  // 0-1, só muda o rótulo. Só existem em modo "static" (climatológico):
+  // não têm evolução mensal própria (ver f3_controls.js →
+  // updateRasterModeAvailability()).
+  const RISCO_COMPOSTO_LABELS = { risco_spei: "Risco (SPEI)", risco_spi: "Risco (SPI)", risco_pdsi: "Risco (scPDSI)" };
+
   function renderLegend(variable = "risco", mode = "monthly") {
-    if (variable === "risco") {
+    if (variable === "risco" || variable in RISCO_COMPOSTO_LABELS) {
       const stops = APP.RISK_COLOR_STOPS;
       const gradient = stops.map((s) => `rgb(${s.color.join(",")}) ${s.at * 100}%`).join(", ");
+      const rotulo = variable === "risco" ? "" : ` — ${RISCO_COMPOSTO_LABELS[variable]}`;
       legendEl.innerHTML = `
         <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
-        <div class="legend-labels"><span>0 (baixo risco)</span><span>1 (alto risco)</span></div>
+        <div class="legend-labels"><span>0 (baixo risco)${rotulo}</span><span>1 (alto risco)</span></div>
       `;
       return;
     }
