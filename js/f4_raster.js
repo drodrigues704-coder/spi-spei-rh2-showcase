@@ -75,7 +75,7 @@ const RasterModule = (() => {
   function tooltipText(feature, variable, mode) {
     const { value_min, value_max } = feature.properties;
     if (variable === "risco") return `Risco: ${value_min.toFixed(2)} – ${value_max.toFixed(2)}`;
-    const label = variable === "spei" ? "SPEI" : "SPI";
+    const label = { spi: "SPI", spei: "SPEI", pdsi: "scPDSI" }[variable] || variable;
     if (mode === "static") return `${label} seca: ${(value_min * 100).toFixed(0)}% – ${(value_max * 100).toFixed(0)}%`;
     return `${label}: ${value_min.toFixed(2)} – ${value_max.toFixed(2)}`;
   }

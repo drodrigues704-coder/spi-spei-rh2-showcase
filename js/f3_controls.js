@@ -57,10 +57,10 @@ const ControlsModule = (() => {
   }
 
   function getSelectedIndex() {
-    return el.index.value; // "spi" | "spei" | "risco_mensal"
+    return el.index.value; // "spi" | "spei" | "pdsi" | "risco_mensal"
   }
 
-  // O mapa fala de "risco" (a API é /raster/monthly/{risco|spi|spei}/{escala}),
+  // O mapa fala de "risco" (a API é /raster/monthly/{risco|spi|spei|pdsi}/{escala}),
   // o gráfico/séries falam de "risco_mensal" (a mesma chave de
   // data/series/<estação>.json) — única tradução entre os dois vocabulários.
   function getSelectedVariable() {
@@ -68,8 +68,19 @@ const ControlsModule = (() => {
     return index === "risco_mensal" ? "risco" : index;
   }
 
+  // scPDSI não tem escalas (é inerentemente mensal, sem acumulação —
+  // ver p1_config.py::PDSI_SCALES e n4_PROJECT_REFERENCE.md §21) — a
+  // API só tem a combinação pdsi/1. Ignora o que estiver selecionado no
+  // seletor de Escala e força 1, em vez de deixar pedir uma escala que
+  // não existe (404). `updateScaleAvailability()` também desativa
+  // visualmente o seletor, para não sugerir uma escolha sem efeito.
   function getSelectedScale() {
+    if (getSelectedIndex() === "pdsi") return 1;
     return parseInt(el.scale.value, 10);
+  }
+
+  function updateScaleAvailability() {
+    el.scale.disabled = getSelectedIndex() === "pdsi";
   }
 
   function getRasterMode() {
@@ -104,6 +115,7 @@ const ControlsModule = (() => {
     getSelectedIndex,
     getSelectedVariable,
     getSelectedScale,
+    updateScaleAvailability,
     getRasterMode,
     updateMonthlyControlsVisibility,
     setBandRange,

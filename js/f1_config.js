@@ -60,6 +60,22 @@ const APP = {
   INDEX_VALUE_MIN: -3.0,
   INDEX_VALUE_MAX: 3.0,
 
+  // Rampa divergente do scPDSI (§21) — mesma família de cores do
+  // SPI/SPEI, mas com os limiares do Palmer (inteiros até ±4, não os
+  // ±0.5 do McKee) — espelha p1_config.py → PDSI_COLOR_STOPS.
+  PDSI_COLOR_STOPS: [
+    { at: -4.0, color: [127, 29, 29] },
+    { at: -3.0, color: [185, 28, 28] },
+    { at: -2.0, color: [245, 158, 11] },
+    { at: -1.0, color: [163, 163, 163] },
+    { at: 1.0, color: [163, 163, 163] },
+    { at: 2.0, color: [96, 165, 250] },
+    { at: 3.0, color: [37, 99, 235] },
+    { at: 4.0, color: [30, 58, 138] },
+  ],
+  PDSI_VALUE_MIN: -4.0,
+  PDSI_VALUE_MAX: 4.0,
+
   // Rampa sequencial da frequência de seca (mapa "Climatológico" de
   // SPI/SPEI — % de meses em seca, não a média bruta, ver §18) — espelha
   // p1_config.py → FREQ_COLOR_STOPS.

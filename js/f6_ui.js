@@ -48,10 +48,11 @@ const UIModule = (() => {
       return;
     }
 
-    const label = variable === "spei" ? "SPEI" : "SPI";
+    const labels = { spi: "SPI", spei: "SPEI", pdsi: "scPDSI" };
+    const label = labels[variable] || variable;
 
     if (mode === "static") {
-      // Climatológico de SPI/SPEI — frequência de seca (%), rampa
+      // Climatológico de SPI/SPEI/PDSI — frequência de seca (%), rampa
       // sequencial, não divergente (ver §18 — a média bruta do índice é
       // ~0 por construção, sem sinal espacial).
       const stops = APP.FREQ_COLOR_STOPS;
@@ -66,16 +67,19 @@ const UIModule = (() => {
       return;
     }
 
-    // SPI/SPEI mensal — rampa divergente, posições normalizadas ao
-    // domínio [INDEX_VALUE_MIN, INDEX_VALUE_MAX] (ver f1_config.js).
-    const stops = APP.INDEX_COLOR_STOPS;
-    const span = APP.INDEX_VALUE_MAX - APP.INDEX_VALUE_MIN;
+    // Mensal — rampa divergente, posições normalizadas ao domínio
+    // próprio da variável (SPI/SPEI: ±3, McKee; scPDSI: ±4, Palmer —
+    // ver f1_config.js, os stops não são intercambiáveis entre os dois).
+    const stops = variable === "pdsi" ? APP.PDSI_COLOR_STOPS : APP.INDEX_COLOR_STOPS;
+    const valueMin = variable === "pdsi" ? APP.PDSI_VALUE_MIN : APP.INDEX_VALUE_MIN;
+    const valueMax = variable === "pdsi" ? APP.PDSI_VALUE_MAX : APP.INDEX_VALUE_MAX;
+    const span = valueMax - valueMin;
     const gradient = stops
-      .map((s) => `rgb(${s.color.join(",")}) ${((s.at - APP.INDEX_VALUE_MIN) / span) * 100}%`)
+      .map((s) => `rgb(${s.color.join(",")}) ${((s.at - valueMin) / span) * 100}%`)
       .join(", ");
     legendEl.innerHTML = `
       <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
-      <div class="legend-labels"><span>${APP.INDEX_VALUE_MIN} (seca extrema)</span><span>${label}</span><span>+${APP.INDEX_VALUE_MAX} (muito húmido)</span></div>
+      <div class="legend-labels"><span>${valueMin} (seca extrema)</span><span>${label}</span><span>+${valueMax} (muito húmido)</span></div>
     `;
   }
 

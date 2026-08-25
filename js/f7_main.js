@@ -207,6 +207,7 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
     // sempre risco, mas SPI/SPEI mostram a frequência de seca da escala
     // selecionada — loadRaster() já sabe resolver os dois casos).
     function onIndexOrScaleChange() {
+      ControlsModule.updateScaleAvailability(); // scPDSI não tem escala — ver f3_controls.js
       renderChart();
       loadRaster();
     }

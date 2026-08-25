@@ -34,6 +34,7 @@
           <select id="ctl-index">
             <option value="spi">SPI</option>
             <option value="spei">SPEI</option>
+            <option value="pdsi">scPDSI</option>
             <option value="risco_mensal">Risco (composto)</option>
           </select>
         </label>
@@ -96,9 +97,9 @@
     <p>
       Monitorização de seca meteorológica na <b>RH2</b> — Região Hidrográfica
       do Cávado, Ave e Leça (noroeste de Portugal Continental), a partir de
-      40 estações udométricas/climatológicas. Mostra a evolução de dois
-      índices de seca reconhecidos internacionalmente (SPI e SPEI) por
-      estação e escala temporal, e um mapa do risco de seca interpolado
+      40 estações udométricas/climatológicas. Mostra a evolução de três
+      índices de seca reconhecidos internacionalmente (SPI, SPEI e scPDSI)
+      por estação e escala temporal, e um mapa do risco de seca interpolado
       espacialmente entre estações.
     </p>
     <p>
@@ -128,6 +129,20 @@
       contexto de aquecimento climático.
     </p>
 
+    <h3>O que é o scPDSI?</h3>
+    <p>
+      <b>scPDSI</b> (self-calibrating Palmer Drought Severity Index)
+      simula o balanço de água no solo em duas camadas (superfície +
+      subsolo, com a capacidade de retenção estimada por textura do
+      solo). Ao contrário do SPI/SPEI, não tem escalas (é sempre
+      mensal, sem acumulação) e tem "memória" — o valor de um mês
+      depende dos meses anteriores, não só da precipitação desse mês. A
+      versão "self-calibrating" recalibra as suas constantes ao clima
+      real de cada estação, em vez de usar as constantes originais de
+      Palmer (1965), calibradas no Kansas — importante numa região tão
+      húmida como a RH2.
+    </p>
+
     <h3>Classes de severidade</h3>
     <table class="info-table">
       <tr><td><span class="swatch" style="background:#7f1d1d"></span></td><td>≤ −2.0</td><td>Seca extrema</td></tr>
@@ -145,15 +160,16 @@
       prazo (1995–2025) do que estiver selecionado em "Índice": para o
       <b>Risco</b>, o índice composto (frequência, severidade,
       recorrência e tendência da seca, 0 a 1) — não é o risco atual. Para
-      <b>SPI</b>/<b>SPEI</b>, a <b>% de meses em seca</b> nessa escala
+      <b>SPI</b>/<b>SPEI</b>/<b>scPDSI</b>, a <b>% de meses em seca</b>
       (não a média bruta do índice, que é sempre ~0 por construção e não
       distingue zonas). O modo <b>"Evolução mensal"</b> interpola
-      espacialmente, mês a mês, o valor real do índice selecionado, para
-      a escala escolhida. A superfície é interpolada por <b>IDW</b> a
-      partir de 40 estações e desenhada como <b>isobandas</b> (áreas
-      coloridas entre limiares, não pixels) — é uma estimativa
-      aproximada entre estações, não uma medição contínua; fora do
-      contorno da RH2, os dados não são mostrados.
+      espacialmente, mês a mês, o valor real do índice selecionado (o
+      scPDSI não tem escala — o seletor "Escala" fica sem efeito). A
+      superfície é interpolada por <b>IDW</b> a partir de 40 estações e
+      desenhada como <b>isobandas</b> (áreas coloridas entre limiares,
+      não pixels) — é uma estimativa aproximada entre estações, não uma
+      medição contínua; fora do contorno da RH2, os dados não são
+      mostrados.
     </p>
 
     <h3>Limitações a ter em conta</h3>
@@ -161,6 +177,7 @@
       <li>40 das 48 estações da RH2 com precipitação e temperatura simultâneas têm dados suficientes para os índices (as restantes não cumprem os critérios mínimos de completude).</li>
       <li>SPI, SPEI e índice de risco atingem agora os ≥30 anos de registo recomendados pela OMM (1995–2025) — mas ainda com cautela nas escalas 24/48 meses perto do início da série.</li>
       <li>2012-10 a 2013-10 (13 meses) têm uma lacuna real na rede de estações SNIRH, não um erro dos dados aqui apresentados.</li>
+      <li>17 leituras mensais de março de 2001 (várias estações de montanha) foram removidas por serem estatisticamente incompatíveis com o resto do registo de cada estação (provável artefacto de sensor) e substituídas pela média sazonal.</li>
       <li>O mapa de risco é uma interpolação estatística (IDW), não uma medição direta entre estações.</li>
     </ul>
   </div>
@@ -179,13 +196,13 @@
      isto, uma alteração a estes scripts só aparecia depois de o
      utilizador limpar a cache manualmente. Subir este número sempre
      que qualquer um destes ficheiros for alterado. -->
-<script src="js/f1_config.js?v=7"></script>
-<script src="js/f2_map.js?v=7"></script>
-<script src="js/f3_controls.js?v=7"></script>
-<script src="js/f4_raster.js?v=7"></script>
-<script src="js/f5_charts.js?v=7"></script>
-<script src="js/f6_ui.js?v=7"></script>
-<script src="js/f7_main.js?v=7"></script>
+<script src="js/f1_config.js?v=8"></script>
+<script src="js/f2_map.js?v=8"></script>
+<script src="js/f3_controls.js?v=8"></script>
+<script src="js/f4_raster.js?v=8"></script>
+<script src="js/f5_charts.js?v=8"></script>
+<script src="js/f6_ui.js?v=8"></script>
+<script src="js/f7_main.js?v=8"></script>
 
 </body>
 </html>

@@ -21,9 +21,7 @@ sabe nada sobre a API.
 const ChartsModule = (() => {
   let chart = null;
 
-  function buildIndexAnnotations() {
-    // Faixas de referência do SPI/SPEI: seca (linhas a -1/-1.5/-2) e húmido (1/1.5/2).
-    const linhas = [-2, -1.5, -1, 1, 1.5, 2];
+  function buildAnnotations(linhas) {
     const annotations = {};
     linhas.forEach((v, i) => {
       annotations[`linha_${i}`] = {
@@ -38,13 +36,18 @@ const ChartsModule = (() => {
     return annotations;
   }
 
-  // Configuração que difere entre "Risco" (0-1, sem classes McKee) e
-  // SPI/SPEI (-3..3, com as faixas de referência).
+  // Configuração que difere por índice: "Risco" (0-1, sem classes) tem
+  // eixo/anotações próprios; SPI/SPEI usam as classes McKee (-3..3,
+  // ±0.5 nos limiares 1/1.5/2); scPDSI usa as classes de Palmer (-4..4,
+  // inteiros — ver docs/ai-team/n4_PROJECT_REFERENCE.md §21).
   function axisConfigFor(index) {
     if (index === "risco_mensal") {
       return { label: "Risco", suggestedMin: 0, suggestedMax: 1, annotations: {} };
     }
-    return { label: index.toUpperCase(), suggestedMin: -3, suggestedMax: 3, annotations: buildIndexAnnotations() };
+    if (index === "pdsi") {
+      return { label: "scPDSI", suggestedMin: -4, suggestedMax: 4, annotations: buildAnnotations([-3, -2, -1, 1, 2, 3]) };
+    }
+    return { label: index.toUpperCase(), suggestedMin: -3, suggestedMax: 3, annotations: buildAnnotations([-2, -1.5, -1, 1, 1.5, 2]) };
   }
 
   function render(station, series, index, scale) {
