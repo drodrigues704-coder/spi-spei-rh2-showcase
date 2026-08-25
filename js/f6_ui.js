@@ -37,14 +37,15 @@ const UIModule = (() => {
     setTimeout(() => (errorBanner.hidden = true), 6000);
   }
 
-  // "risco" é o Risco de referência (SPEI-48 fixo — marcadores/mapa
-  // "Risco (composto)" de sempre); "risco_spei"/"risco_spi"/
+  // "risco" é o "Risco (composto)" de sempre — marcadores das estações
+  // sempre SPEI-48, mas o mapa Climatológico já respeita a Escala desde
+  // §22 (mesmos números que SPEI-48 quando Escala=48). "risco_spi"/
   // "risco_pdsi" são o mesmo composto (frequência+severidade+
-  // recorrência+tendência), mas por índice/escala (§22) — mesma rampa
+  // recorrência+tendência), por SPI/scPDSI em vez de SPEI — mesma rampa
   // 0-1, só muda o rótulo. Só existem em modo "static" (climatológico):
   // não têm evolução mensal própria (ver f3_controls.js →
   // updateRasterModeAvailability()).
-  const RISCO_COMPOSTO_LABELS = { risco_spei: "Risco (SPEI)", risco_spi: "Risco (SPI)", risco_pdsi: "Risco (scPDSI)" };
+  const RISCO_COMPOSTO_LABELS = { risco_spi: "Risco (SPI)", risco_pdsi: "Risco (scPDSI)" };
 
   function renderLegend(variable = "risco", mode = "monthly") {
     if (variable === "risco" || variable in RISCO_COMPOSTO_LABELS) {

@@ -104,9 +104,9 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
   function renderChart() {
     if (!currentSeries) return;
     const station = ControlsModule.getSelectedStation();
-    // "risco_spei"/"risco_spi"/"risco_pdsi" não têm série própria (são
-    // um resumo estático, §22) — getChartIndex() mostra antes a série
-    // do índice que alimenta o composto (ver f3_controls.js).
+    // "risco_spi"/"risco_pdsi" não têm série própria (são um resumo
+    // estático, §22) — getChartIndex() mostra antes a série do índice
+    // que alimenta o composto (ver f3_controls.js).
     const index = ControlsModule.getChartIndex();
     const scale = ControlsModule.getSelectedScale();
     ChartsModule.render(station, currentSeries, index, scale);
@@ -124,13 +124,17 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
 
       if (mode === "static") {
         currentMonthlyDates = [];
-        // "risco" continua sempre a climatologia de sempre
-        // (raster_static). SPI/SPEI, desde §18, mostram a frequência de
-        // seca por escala (raster_static_index) — não a média bruta do
-        // índice, que é ~0 por construção (sem sinal espacial).
-        const meta = variable === "risco"
-          ? await RasterModule.loadStaticMeta()
-          : await RasterModule.loadStaticIndexMeta(variable, scale);
+        // "Risco (composto)" no Climatológico usa o composto por escala
+        // (raster_static_index → "risco_spei", §22), não o antigo
+        // raster fixo em SPEI-48 (raster_static) — eram exatamente os
+        // mesmos números quando Escala=48 (o "Risco composto — SPEI"
+        // que existia antes disto era por isso 100% redundante com este
+        // no caso Escala=48; removido, fundido aqui). SPI/SPEI/scPDSI
+        // mostram a frequência de seca por escala (§18); os outros 2
+        // "Risco composto" (SPI/scPDSI) já são a chave certa tal como
+        // está (`variable` já é "risco_spi"/"risco_pdsi" nesses casos).
+        const staticVariable = ControlsModule.getSelectedIndex() === "risco_mensal" ? "risco_spei" : variable;
+        const meta = await RasterModule.loadStaticIndexMeta(staticVariable, scale);
         const geojson = await RasterModule.loadGeojson(meta.isoband_url);
         if (myId !== rasterRequestId) return; // superseded por um pedido mais recente
         RasterModule.render(geojson, variable, "static");

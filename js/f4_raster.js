@@ -33,14 +33,16 @@ em vez de as calcular no browser:
      slider (~1700 rasters mensais).
 
 Três variáveis mensais desde §17 (antes só risco — ver `p6b_isobands.py`
-e `catalog.json`), mais o climatológico de SPI/SPEI desde §18
-(frequência de seca — % de meses em seca por escala, não a média bruta
-do índice, que é ~0 por construção):
-  • estático — `raster_static.isoband_url` (Indice_Risco, sempre risco)
-    ou `raster_static_index[spi|spei][escala].isoband_url` (% de meses
-    em seca);
+e `catalog.json`), mais o climatológico de SPI/SPEI/scPDSI desde §18 e
+o Índice de Risco composto por índice/escala desde §22:
+  • estático — `raster_static_index[variável][escala].isoband_url`,
+    genérico: `spi`/`spei`/`pdsi` (% de meses em seca) ou
+    `risco_spei`/`risco_spi`/`risco_pdsi` (Índice de Risco composto,
+    0-1 — inclui o antigo "Risco (composto)" fixo em SPEI-48, agora só
+    mais uma escala de `risco_spei`, ver n4_PROJECT_REFERENCE.md §22);
   • mensal — `raster_monthly[risco|spi|spei][escala].isoband_dates[i].url`,
-    1 ficheiro por data.
+    1 ficheiro por data (scPDSI não tem escala própria, mas segue a
+    mesma forma).
 ===============================================================================
 */
 
@@ -68,13 +70,14 @@ const RasterModule = (() => {
   }
 
   // Texto do tooltip de cada polígono — depende da variável e de
-  // "mode": "risco"/"risco_spei"/"risco_spi"/"risco_pdsi" ficam sempre
-  // 0-1 (Índice de Risco composto, §22 — só existem em modo "static");
-  // SPI/SPEI/PDSI mensal ("monthly") mostra o valor do índice; SPI/
-  // SPEI/PDSI climatológico ("static") mostra frequência de seca em %
-  // (o value_min/value_max do GeoJSON são frações 0-1, multiplicadas
-  // por 100 aqui só para o texto).
-  const RISCO_COMPOSTO_LABELS = { risco: "Risco", risco_spei: "Risco (SPEI)", risco_spi: "Risco (SPI)", risco_pdsi: "Risco (scPDSI)" };
+  // "mode": "risco" (inclui "Risco (composto)"/risco_mensal — o mesmo
+  // rótulo plano de sempre, mesmo com dados agora por escala, §22) e
+  // "risco_spi"/"risco_pdsi" ficam sempre 0-1 (Índice de Risco composto
+  // — os 2 últimos só existem em modo "static"); SPI/SPEI/PDSI mensal
+  // ("monthly") mostra o valor do índice; SPI/SPEI/PDSI climatológico
+  // ("static") mostra frequência de seca em % (o value_min/value_max do
+  // GeoJSON são frações 0-1, multiplicadas por 100 aqui só para o texto).
+  const RISCO_COMPOSTO_LABELS = { risco: "Risco", risco_spi: "Risco (SPI)", risco_pdsi: "Risco (scPDSI)" };
 
   function tooltipText(feature, variable, mode) {
     const { value_min, value_max } = feature.properties;
@@ -107,12 +110,12 @@ const RasterModule = (() => {
     MapModule.setRasterLayer(currentLayer);
   }
 
-  async function loadStaticMeta() {
-    return fetchMeta("/raster/static");
-  }
-
-  // SPI/SPEI climatológico (frequência de seca — §18); "risco" não passa
-  // por aqui, usa sempre loadStaticMeta().
+  // SPI/SPEI/scPDSI climatológico (frequência de seca — §18) e "Risco
+  // (composto)"/"Risco composto — SPI/scPDSI" (Índice de Risco por
+  // índice/escala — §22) passam todos por aqui. `/raster/static` (sem
+  // variável/escala, o raster fixo em SPEI-48) deixou de ser usado pela
+  // UI — a mesma superfície agora está sempre acessível via
+  // "risco_spei"/48 aqui, ver f7_main.js.
   async function loadStaticIndexMeta(variable, scale) {
     return fetchMeta(`/raster/static/${variable}/${scale}`);
   }
@@ -127,5 +130,5 @@ const RasterModule = (() => {
   // de mutar o mapa/rótulo. Ver f7_main.js (`rasterRequestId`) — o mesmo
   // padrão já resolveu uma condição de corrida real com a versão anterior
   // (georaster) deste módulo, mantido aqui por segurança.
-  return { loadStaticMeta, loadStaticIndexMeta, loadMonthlyMeta, loadGeojson, render };
+  return { loadStaticIndexMeta, loadMonthlyMeta, loadGeojson, render };
 })();
