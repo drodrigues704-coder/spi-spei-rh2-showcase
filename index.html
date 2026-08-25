@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPI/SPEI RH2 — Monitorização de Seca</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="CSS/style.css" />
+</head>
+<body>
+
+<header id="app-header">
+  <h1>SPI / SPEI — RH2</h1>
+  <span id="app-subtitle">Monitorização de seca meteorológica — Cávado / Ave / Leça (1995–2025)</span>
+  <button id="btn-basemap" type="button" title="Trocar mapa de fundo">🗺 Mapa: Escuro</button>
+  <button id="btn-info" type="button" title="Sobre a app e os índices">ℹ Sobre</button>
+</header>
+
+<div id="app">
+
+  <aside id="sidebar">
+
+    <section class="panel">
+      <h2>Estação</h2>
+      <select id="ctl-station"><option value="">A carregar…</option></select>
+      <div id="station-meta"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Índice e escala</h2>
+      <div class="row">
+        <label>Índice
+          <select id="ctl-index">
+            <option value="spi">SPI</option>
+            <option value="spei">SPEI</option>
+            <option value="risco_mensal">Risco (composto)</option>
+          </select>
+        </label>
+        <label>Escala
+          <select id="ctl-scale">
+            <option value="1">1 mês</option>
+            <option value="3">3 meses</option>
+            <option value="6">6 meses</option>
+            <option value="12" selected>12 meses</option>
+            <option value="24">24 meses</option>
+            <option value="48">48 meses</option>
+          </select>
+        </label>
+      </div>
+      <p class="note">
+        Estes dois seletores controlam tanto o gráfico abaixo (por
+        estação) como o mapa espacial em "Evolução mensal" — mudar um
+        muda os dois.
+      </p>
+      <canvas id="chart-series" height="220"></canvas>
+    </section>
+
+    <section class="panel">
+      <h2>Mapa espacial</h2>
+      <label class="row">
+        <input type="radio" name="raster-mode" value="static" checked> Climatológico (1995–2025) — usa o Índice acima
+      </label>
+      <label class="row">
+        <input type="radio" name="raster-mode" value="monthly"> Evolução mensal — usa o Índice/Escala acima
+      </label>
+      <div id="monthly-controls" hidden>
+        <input type="range" id="ctl-band-slider" min="0" max="0" value="0" step="1">
+        <div id="band-date-label">—</div>
+        <div class="row">
+          <button id="btn-play" type="button">▶ Reproduzir</button>
+        </div>
+      </div>
+      <div id="raster-legend"></div>
+      <p class="note">
+        Interpolação por IDW (não Kriging — sem autocorrelação espacial
+        significativa detetável nestes dados; ver o mapa como uma
+        estimativa aproximada entre estações, não uma medição contínua).
+      </p>
+    </section>
+
+  </aside>
+
+  <main id="map"></main>
+
+</div>
+
+<div id="loading-overlay" hidden><div class="spinner"></div></div>
+<div id="error-banner" hidden></div>
+
+<div id="info-modal" hidden>
+  <div id="info-modal-card">
+    <button id="btn-info-close" type="button" aria-label="Fechar">✕</button>
+
+    <h2>Sobre esta app</h2>
+    <p>
+      Monitorização de seca meteorológica na <b>RH2</b> — Região Hidrográfica
+      do Cávado, Ave e Leça (noroeste de Portugal Continental), a partir de
+      40 estações udométricas/climatológicas. Mostra a evolução de dois
+      índices de seca reconhecidos internacionalmente (SPI e SPEI) por
+      estação e escala temporal, e um mapa do risco de seca interpolado
+      espacialmente entre estações.
+    </p>
+    <p>
+      Tanto o <b>SPI</b> como o <b>SPEI</b> e o <b>mapa de risco</b>
+      cobrem <b>1995–2025</b> (31 anos, o mínimo recomendado pela OMM —
+      ver abaixo).
+    </p>
+
+    <h3>O que é o SPI?</h3>
+    <p>
+      <b>SPI</b> (Standardized Precipitation Index) mede o desvio da
+      precipitação acumulada num período (1 a 48 meses) face à média
+      histórica desse mesmo período, na mesma estação. <b>0</b> é "normal";
+      valores <b>negativos</b> indicam seca (quanto mais negativo, mais
+      severa); valores <b>positivos</b> indicam excesso de precipitação.
+      Escalas curtas (1–3 meses) refletem seca agrícola/de curto prazo;
+      escalas longas (12–48 meses) refletem seca hidrológica/estrutural.
+    </p>
+
+    <h3>O que é o SPEI?</h3>
+    <p>
+      <b>SPEI</b> (Standardized Precipitation-Evapotranspiration Index) é
+      semelhante ao SPI, mas parte do balanço entre precipitação e
+      evapotranspiração (água perdida por temperatura/radiação), não só da
+      precipitação. É por isso mais sensível ao efeito de temperaturas
+      altas no agravamento da seca — duas particularmente relevantes num
+      contexto de aquecimento climático.
+    </p>
+
+    <h3>Classes de severidade</h3>
+    <table class="info-table">
+      <tr><td><span class="swatch" style="background:#7f1d1d"></span></td><td>≤ −2.0</td><td>Seca extrema</td></tr>
+      <tr><td><span class="swatch" style="background:#b91c1c"></span></td><td>−2.0 a −1.5</td><td>Seca severa</td></tr>
+      <tr><td><span class="swatch" style="background:#f59e0b"></span></td><td>−1.5 a −1.0</td><td>Seca moderada</td></tr>
+      <tr><td><span class="swatch" style="background:#a3a3a3"></span></td><td>−1.0 a 1.0</td><td>Quase normal</td></tr>
+      <tr><td><span class="swatch" style="background:#60a5fa"></span></td><td>1.0 a 2.0</td><td>Moderadamente/muito húmido</td></tr>
+      <tr><td><span class="swatch" style="background:#1e3a8a"></span></td><td>≥ 2.0</td><td>Extremamente húmido</td></tr>
+    </table>
+    <p class="muted-small">Classificação de McKee et al. (1993), adotada pela Organização Meteorológica Mundial (OMM).</p>
+
+    <h3>Mapa espacial</h3>
+    <p>
+      O modo <b>"Climatológico"</b> mostra a média/frequência de longo
+      prazo (1995–2025) do que estiver selecionado em "Índice": para o
+      <b>Risco</b>, o índice composto (frequência, severidade,
+      recorrência e tendência da seca, 0 a 1) — não é o risco atual. Para
+      <b>SPI</b>/<b>SPEI</b>, a <b>% de meses em seca</b> nessa escala
+      (não a média bruta do índice, que é sempre ~0 por construção e não
+      distingue zonas). O modo <b>"Evolução mensal"</b> interpola
+      espacialmente, mês a mês, o valor real do índice selecionado, para
+      a escala escolhida. A superfície é interpolada por <b>IDW</b> a
+      partir de 40 estações e desenhada como <b>isobandas</b> (áreas
+      coloridas entre limiares, não pixels) — é uma estimativa
+      aproximada entre estações, não uma medição contínua; fora do
+      contorno da RH2, os dados não são mostrados.
+    </p>
+
+    <h3>Limitações a ter em conta</h3>
+    <ul>
+      <li>40 das 48 estações da RH2 com precipitação e temperatura simultâneas têm dados suficientes para os índices (as restantes não cumprem os critérios mínimos de completude).</li>
+      <li>SPI, SPEI e índice de risco atingem agora os ≥30 anos de registo recomendados pela OMM (1995–2025) — mas ainda com cautela nas escalas 24/48 meses perto do início da série.</li>
+      <li>2012-10 a 2013-10 (13 meses) têm uma lacuna real na rede de estações SNIRH, não um erro dos dados aqui apresentados.</li>
+      <li>O mapa de risco é uma interpolação estatística (IDW), não uma medição direta entre estações.</li>
+    </ul>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<!-- georaster / georaster-layer-for-leaflet removidos — o mapa de risco
+     passou a isobandas vetoriais pré-calculadas (ver f4_raster.js e
+     docs/ai-team/n4_PROJECT_REFERENCE.md §12), não precisa de ler
+     GeoTIFF no browser. -->
+
+<!-- "?v=..." força o browser a ir sempre buscar a versão mais recente
+     destes ficheiros, em vez de reutilizar uma cópia em cache — sem
+     isto, uma alteração a estes scripts só aparecia depois de o
+     utilizador limpar a cache manualmente. Subir este número sempre
+     que qualquer um destes ficheiros for alterado. -->
+<script src="js/f1_config.js?v=7"></script>
+<script src="js/f2_map.js?v=7"></script>
+<script src="js/f3_controls.js?v=7"></script>
+<script src="js/f4_raster.js?v=7"></script>
+<script src="js/f5_charts.js?v=7"></script>
+<script src="js/f6_ui.js?v=7"></script>
+<script src="js/f7_main.js?v=7"></script>
+
+</body>
+</html>

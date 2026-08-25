@@ -1,0 +1,259 @@
+/*
+===============================================================================
+WEBAPP — SPI/SPEI RH2 — STYLE.CSS
+===============================================================================
+*/
+
+:root {
+  --bg: #0f172a;
+  --panel-bg: #1e293b;
+  --panel-border: #334155;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --accent: #3b82f6;
+  --warning-bg: #78350f;
+  --warning-text: #fde68a;
+  --error-bg: #7f1d1d;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+#app-header {
+  padding: 10px 16px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+#app-header h1 { margin: 0; font-size: 1.1rem; }
+#app-subtitle { color: var(--text-dim); font-size: 0.85rem; }
+#btn-basemap, #btn-info {
+  width: auto;
+  margin-top: 0;
+  padding: 5px 12px;
+  white-space: nowrap;
+  align-self: center;
+}
+#btn-basemap { margin-left: auto; } /* empurra os dois botões para a direita do cabeçalho */
+
+#app {
+  display: flex;
+  height: calc(100% - 48px);
+}
+
+#sidebar {
+  width: 340px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 12px;
+  border-right: 1px solid var(--panel-border);
+}
+
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+select, input[type="range"], button {
+  width: 100%;
+  background: #0f172a;
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+}
+button {
+  cursor: pointer;
+  margin-top: 6px;
+}
+button:hover { border-color: var(--accent); }
+
+label { font-size: 0.8rem; color: var(--text-dim); display: block; margin-bottom: 6px; }
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.row label { flex: 1; margin-bottom: 0; }
+
+#station-meta { margin-top: 8px; font-size: 0.85rem; }
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  border-bottom: 1px dotted var(--panel-border);
+}
+.meta-row span { color: var(--text-dim); }
+
+.warning {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  margin-bottom: 8px;
+}
+
+.note {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin: 8px 0 0;
+}
+
+#band-date-label {
+  text-align: center;
+  font-size: 0.85rem;
+  margin: 6px 0;
+  color: var(--text-dim);
+}
+
+#raster-legend { margin-top: 8px; }
+.legend-bar {
+  height: 12px;
+  border-radius: 4px;
+}
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+#map {
+  flex: 1;
+  background: #111;
+}
+
+#loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+/* [hidden] tem baixa especificidade — sem isto, o #loading-overlay acima
+   (seletor de ID) ganhava à regra [hidden]{display:none} do browser e o
+   overlay continuava a bloquear cliques mesmo com hidden="" definido. */
+#loading-overlay:not([hidden]) {
+  display: flex;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--panel-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#error-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--error-bg);
+  color: #fecaca;
+  padding: 8px 16px;
+  border-radius: 6px;
+  z-index: 2100;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* =============================================================================
+   PAINEL "SOBRE"
+   ============================================================================= */
+
+#info-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 24px;
+}
+/* Mesma regra que o #loading-overlay (ver acima) — [hidden] tem baixa
+   especificidade e um seletor de ID com `display` ganha-lhe, deixando o
+   modal visível/a bloquear cliques mesmo com hidden="" definido. */
+#info-modal:not([hidden]) {
+  display: flex;
+}
+
+#info-modal-card {
+  position: relative;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px 28px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+#info-modal-card h2 { margin-top: 0; }
+#info-modal-card h3 { color: var(--accent); font-size: 0.95rem; margin: 18px 0 6px; }
+#info-modal-card p { line-height: 1.5; font-size: 0.9rem; }
+#info-modal-card ul { font-size: 0.87rem; line-height: 1.5; padding-left: 20px; }
+
+#btn-info-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.info-table { border-collapse: collapse; font-size: 0.85rem; margin: 6px 0; }
+.info-table td { padding: 3px 8px 3px 0; }
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.muted-small { color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
+
+/* =============================================================================
+   POPUPS DO LEAFLET (tema escuro)
+   ============================================================================= */
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--panel-bg);
+  color: var(--text);
+}
+.marker-popup .muted { color: var(--text-dim); font-weight: normal; }
+.marker-popup table { margin-top: 6px; font-size: 0.82rem; border-collapse: collapse; }
+.marker-popup td { padding: 2px 8px 2px 0; }
+.marker-popup td:first-child { color: var(--text-dim); }
