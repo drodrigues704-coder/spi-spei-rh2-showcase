@@ -220,6 +220,7 @@ label { font-size: 0.8rem; color: var(--text-dim); display: block; margin-bottom
 #info-modal-card h3 { color: var(--accent); font-size: 0.95rem; margin: 18px 0 6px; }
 #info-modal-card p { line-height: 1.5; font-size: 0.9rem; }
 #info-modal-card ul { font-size: 0.87rem; line-height: 1.5; padding-left: 20px; }
+.biblio li { margin-bottom: 10px; }
 
 #btn-info-close {
   position: absolute;

@@ -204,6 +204,81 @@
       <li>17 leituras mensais de março de 2001 (várias estações de montanha) foram removidas por serem estatisticamente incompatíveis com o resto do registo de cada estação (provável artefacto de sensor) e substituídas pela média sazonal.</li>
       <li>O mapa de risco é uma interpolação estatística (IDW), não uma medição direta entre estações.</li>
     </ul>
+
+    <h3>Bibliografia</h3>
+    <p>
+      Os métodos usados nesta app seguem a literatura científica de
+      referência para cada índice. Onde a implementação diverge da prática
+      oficial da Organização Meteorológica Mundial (OMM) ou do IPMA, isso
+      está indicado — por escolha deliberada e documentada, não por
+      omissão.
+    </p>
+    <ul class="biblio">
+      <li>
+        <b>SPI</b> — McKee, T.B., Doesken, N.J., Kleist, J. (1993).
+        <i>The relationship of drought frequency and duration to time
+        scales.</i> Proceedings of the 8th Conference on Applied
+        Climatology, American Meteorological Society, 179–184.
+        Classificação de severidade adotada pela OMM (WMO-No. 1090, 2012).
+        Nas escalas 1, 3 e 6, a distribuição gamma é ajustada por mês do
+        calendário (com alargamento da amostra quando há poucos valores
+        reais), aproximando-se da prática da OMM/IPMA; nas escalas 12, 24
+        e 48 mantém-se o ajuste à série completa de cada estação, sem
+        prejuízo prático, já que a sazonalidade se cancela estruturalmente
+        numa janela rolante desta duração.
+      </li>
+      <li>
+        <b>SPEI</b> — Vicente-Serrano, S.M., Beguería, S., López-Moreno,
+        J.I. (2010). <i>A Multiscalar Drought Index Sensitive to Global
+        Warming: The Standardized Precipitation Evapotranspiration
+        Index.</i> Journal of Climate, 23(7), 1696–1718. Ajustado aqui por
+        distribuição Pearson III (Beguería et al., 2014), uma alternativa
+        documentada pelos próprios autores do índice, não a log-logística
+        "de manual". Nas escalas 1, 3 e 6 os parâmetros são estimados por
+        L-momentos em vez de máxima verosimilhança, prática recomendada
+        pelos próprios autores para amostras pequenas e assimétricas. O
+        IPMA não publica atualmente o SPEI como produto oficial.
+      </li>
+      <li>
+        <b>Evapotranspiração potencial (entrada do SPEI)</b> — Hargreaves,
+        G.H., Samani, Z.A. (1985). <i>Reference Crop Evapotranspiration
+        from Temperature.</i> Applied Engineering in Agriculture, 1(2),
+        96–99.
+      </li>
+      <li>
+        <b>scPDSI</b> — Wells, N., Goddard, S., Hayes, M.J. (2004).
+        <i>A Self-Calibrating Palmer Drought Severity Index.</i> Journal of
+        Climate, 17(12), 2335–2351. Versão auto-calibrada do índice de
+        Palmer (1965), com a capacidade de água do solo estimada por
+        estação (Saxton &amp; Rawls, 2006) em vez de um valor fixo para
+        todo o país — abordagem mais recente do que a usada atualmente
+        pelo IPMA no seu PDSI oficial (Palmer original, capacidade de água
+        do solo uniforme). A escolha foi feita porque o Palmer original
+        produzia valores fisicamente implausíveis nas estações de
+        montanha da RH2.
+      </li>
+      <li>
+        <b>Capacidade de água do solo (AWC, entrada do scPDSI)</b> —
+        Saxton, K.E., Rawls, W.J. (2006). <i>Soil Water Characteristic
+        Estimates by Texture and Organic Matter for Hydrologic
+        Solutions.</i> Soil Science Society of America Journal, 70(5),
+        1569–1578.
+      </li>
+      <li>
+        <b>Interpolação espacial (IDW)</b> — Shepard, D. (1968).
+        <i>A two-dimensional interpolation function for irregularly-spaced
+        data.</i> Proceedings of the 1968 23rd ACM National Conference,
+        517–524. Escolhida sobre Kriging/RBF/TPS depois de testes que não
+        encontraram autocorrelação espacial significativa nos dados desta
+        bacia.
+      </li>
+    </ul>
+    <p class="muted-small">
+      O índice de risco composto (frequência, severidade, recorrência e
+      tendência) é uma construção interna deste projeto — só os limiares
+      de classe (McKee et al., 1993) vêm da literatura; a fórmula de
+      composição não corresponde a um índice publicado.
+    </p>
   </div>
 </div>
 
