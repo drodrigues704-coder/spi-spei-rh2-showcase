@@ -21,6 +21,20 @@ sabe nada sobre a API.
 const ChartsModule = (() => {
   let chart = null;
 
+  // Tom quente neutro (--text-dim aproximado) para os limiares tracejados
+  // e para gridlines/ticks abaixo — antes cinzento-azulado "puro", agora
+  // consistente com a paleta "terra seca" do redesign (ver CSS/style.css).
+  // Chart.js não lê custom properties CSS diretamente nas opções de config
+  // (só funcionaria com getComputedStyle em runtime, mais código para um
+  // ganho pequeno) — por isso os valores estão duplicados aqui À MÃO.
+  // MANTER SINCRONIZADO: --text-dim (#a6957a) e --accent (#cc7a3d) em
+  // CSS/style.css — se um mudar lá, atualizar aqui também.
+  const WARM_NEUTRAL = "rgba(166,149,122,0.35)";
+  const WARM_NEUTRAL_GRID = "rgba(166,149,122,0.15)";
+  const WARM_NEUTRAL_TEXT = "#a6957a"; // = --text-dim
+  const ACCENT = "#cc7a3d"; // = --accent
+  const FONT_MONO = "'IBM Plex Mono', ui-monospace, monospace";
+
   function buildAnnotations(linhas) {
     const annotations = {};
     linhas.forEach((v, i) => {
@@ -28,7 +42,7 @@ const ChartsModule = (() => {
         type: "line",
         yMin: v,
         yMax: v,
-        borderColor: "rgba(120,120,120,0.35)",
+        borderColor: WARM_NEUTRAL,
         borderWidth: 1,
         borderDash: [4, 4],
       };
@@ -80,8 +94,8 @@ const ChartsModule = (() => {
           {
             label,
             data: values,
-            borderColor: "#1d4ed8",
-            backgroundColor: "rgba(29,78,216,0.08)",
+            borderColor: ACCENT,
+            backgroundColor: "rgba(204,122,61,0.10)",
             borderWidth: 1.5,
             pointRadius: 0,
             fill: true,
@@ -95,7 +109,10 @@ const ChartsModule = (() => {
         scales: {
           x: {
             type: "category",
+            grid: { color: WARM_NEUTRAL_GRID },
             ticks: {
+              color: WARM_NEUTRAL_TEXT,
+              font: { family: FONT_MONO },
               maxRotation: 0,
               autoSkip: true,
               maxTicksLimit: 10,
@@ -109,10 +126,15 @@ const ChartsModule = (() => {
               },
             },
           },
-          y: { suggestedMin: cfg.suggestedMin, suggestedMax: cfg.suggestedMax },
+          y: {
+            suggestedMin: cfg.suggestedMin,
+            suggestedMax: cfg.suggestedMax,
+            grid: { color: WARM_NEUTRAL_GRID },
+            ticks: { color: WARM_NEUTRAL_TEXT, font: { family: FONT_MONO } },
+          },
         },
         plugins: {
-          legend: { display: true },
+          legend: { display: true, labels: { color: WARM_NEUTRAL_TEXT } },
           annotation: { annotations: cfg.annotations },
         },
       },

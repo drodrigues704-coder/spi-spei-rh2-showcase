@@ -14,24 +14,27 @@ camadas (estações, raster). Não sabe nada sobre a API; só expõe
 ===============================================================================
 */
 
-// Basemaps disponíveis — "Escuro" (CARTO Dark Matter) é o defeito desde
-// sempre (combina com o tema da interface e não compete visualmente com
-// a rampa de cor das isobandas; o OpenStreetMap por omissão é colorido
-// e satura o mapa). "Claro" e "Satélite" pedidos pelo dono do projeto
-// para poder comparar o mapa de risco sobre um fundo com mais contexto
-// (relevo/uso do solo) — nenhum precisa de chave de API.
+// Basemaps disponíveis — "Escuro" e "Claro" usavam CARTO (dark_all/
+// light_all), que passou a exigir chave de API (as tiles começaram a
+// devolver um PNG com "API KEY REQUIRED" escrito por cima — confirmado
+// em 2026-08 com pedidos diretos às tiles, não só inspeção da consola).
+// Substituídos por Esri "Canvas" (World_Dark_Gray_Base / World_Light_
+// Gray_Base) — mesma família visual (mapa neutro, pouco saturado, não
+// compete com a rampa de cor das isobandas), confirmado sem chave de
+// API nem marca de água. "Satélite" (Esri World_Imagery) não foi afetado
+// e mantém-se igual.
 const BASEMAPS = [
   {
     label: "Escuro",
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    options: { subdomains: "abcd", maxZoom: 19 },
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS",
+    options: { maxZoom: 16 },
   },
   {
     label: "Claro",
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    options: { subdomains: "abcd", maxZoom: 19 },
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS",
+    options: { maxZoom: 16 },
   },
   {
     label: "Satélite",
