@@ -249,6 +249,17 @@ selecionadas) — nenhum outro módulo guarda estado partilhado.
       const label = MapModule.cycleBasemap();
       document.getElementById("btn-basemap").textContent = `🗺 Mapa: ${label}`;
     });
+
+    // Leaflet guarda o tamanho do contentor no momento em que o mapa é
+    // criado — sem isto, rodar o telemóvel ou redimensionar a janela
+    // (incluindo passar o breakpoint mobile de f6_ui.js) deixava as
+    // tiles desalinhadas ou com uma faixa cinzenta. Debounce simples
+    // (150ms) para não chamar em cada pixel do resize.
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => MapModule.getMap().invalidateSize(), 150);
+    });
   }
 
   async function init() {

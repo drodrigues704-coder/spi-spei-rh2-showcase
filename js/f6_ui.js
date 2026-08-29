@@ -22,6 +22,9 @@ const UIModule = (() => {
   const infoModal = document.getElementById("info-modal");
   const btnInfo = document.getElementById("btn-info");
   const btnInfoClose = document.getElementById("btn-info-close");
+  const sidebar = document.getElementById("sidebar");
+  const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+  const btnMenu = document.getElementById("btn-menu");
 
   function showLoading() {
     overlay.hidden = false;
@@ -120,6 +123,44 @@ const UIModule = (() => {
   }
 
   wireInfoModal();
+
+  // Gaveta da sidebar em mobile (≤768px, ver style.css) — só existe
+  // #btn-menu nesse breakpoint (escondido em desktop por CSS), mas o
+  // listener não faz mal ficar sempre montado. Mesmo padrão do modal
+  // "Sobre" acima: alterna uma classe, fecha ao tocar fora ou Escape.
+  function openSidebar() {
+    sidebar.classList.add("open");
+    sidebarBackdrop.hidden = false;
+    btnMenu.textContent = "✕";
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove("open");
+    sidebarBackdrop.hidden = true;
+    btnMenu.textContent = "☰";
+  }
+
+  function wireSidebarDrawer() {
+    btnMenu.addEventListener("click", () => {
+      if (sidebar.classList.contains("open")) closeSidebar();
+      else openSidebar();
+    });
+    sidebarBackdrop.addEventListener("click", closeSidebar);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && sidebar.classList.contains("open")) closeSidebar();
+    });
+
+    // Sem isto: abrir a gaveta em mobile, rodar o ecrã (ou redimensionar
+    // a janela) para desktop e voltar a estreitar deixava a classe
+    // "open"/o ícone "✕" pendurados de uma sessão anterior, sem o
+    // utilizador ter clicado em nada (achado no code review, não
+    // hipotético) — sair do breakpoint mobile fecha sempre a gaveta.
+    window.matchMedia("(max-width: 768px)").addEventListener("change", (e) => {
+      if (!e.matches) closeSidebar();
+    });
+  }
+
+  wireSidebarDrawer();
 
   return { showLoading, hideLoading, showError, renderLegend, showInfo, hideInfo };
 })();
