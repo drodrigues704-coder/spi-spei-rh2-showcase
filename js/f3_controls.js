@@ -43,7 +43,7 @@ const ControlsModule = (() => {
   }
 
   // "station" (omissão) — o gráfico mostra a série da estação
-  // selecionada acima, como sempre. "rh2" — mostra a média das 40
+  // selecionada acima, como sempre. "rh2" — mostra a média das 37
   // estações em vez disso (série pré-calculada no pipeline,
   // RH2_MEDIA.json — pedido do dono do projeto, ver
   // n4_PROJECT_REFERENCE.md §23), independente da estação selecionada
