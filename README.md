@@ -9,16 +9,17 @@ Este repositório é uma **demonstração pública** — contém a app já const
 ## O que a app mostra
 
 - **SPI** (Standardized Precipitation Index), **SPEI** (Standardized Precipitation-Evapotranspiration Index) e **scPDSI** (self-calibrating Palmer Drought Severity Index), por estação (SPI/SPEI com escala temporal de 1 a 48 meses; scPDSI é sempre mensal, sem escala)
-- Um **índice de risco de seca** composto (frequência, severidade, recorrência e tendência), por estação
+- Um **índice de risco de seca** composto (frequência, severidade, recorrência e tendência), por estação — a partir do SPEI, do SPI ou do scPDSI, e por escala
 - Mapa espacial interpolado (**IDW** + isobandas) para as 4 variáveis — SPI, SPEI, scPDSI e o risco composto — no modo climatológico (média/frequência de longo prazo) e na evolução mês a mês
-- 40 estações udométricas/climatológicas da RH2, 1995–2025
+- 37 estações udométricas/climatológicas da RH2, 1995–2025, e a série média da RH2
 
 ## Metodologia (resumo)
 
-- **SPI**: ajuste de distribuição gamma à precipitação acumulada por escala, com correção de Thom para a probabilidade de zero, transformação normal inversa (método da OMM)
+- **Dados de entrada**: um mês de precipitação só conta como observação real com pelo menos 80% dos dias com registo; abaixo disso é tratado como falha e preenchido pela média sazonal da estação
+- **SPI**: ajuste de distribuição gamma à precipitação acumulada por escala (por mês do calendário nas escalas 1, 3 e 6), com correção de Thom para a probabilidade de zero, transformação normal inversa (método da OMM)
 - **SPEI**: balanço hídrico P−PET (evapotranspiração por Hargreaves-Samani), ajuste de distribuição Pearson III
 - **scPDSI**: balanço de água no solo em duas camadas (Palmer, 1965), com a capacidade de retenção do solo estimada por textura (Saxton & Rawls), PET por Thornthwaite e recalibração automática das constantes ao clima de cada estação (Wells et al., 2004) em vez das constantes originais calibradas no Kansas
-- **Índice de risco**: composto ponderado de frequência de seca, severidade, recorrência e tendência (Mann-Kendall), sobre SPEI-48
+- **Índice de risco**: composto ponderado de frequência de seca, severidade, recorrência e tendência (Mann-Kendall); a referência é o SPEI-48, e o modo climatológico permite também calculá-lo por escala e a partir do SPI ou do scPDSI
 - **Interpolação espacial**: IDW (Inverse Distance Weighting) — testado e comparado com Kriging/RBF/TPS; sem autocorrelação espacial significativa detetável (Moran's I), IDW oferece o mesmo desempenho com muito menos complexidade
 - **Classificação de severidade**: McKee et al. (1993), adotada pela OMM
 
