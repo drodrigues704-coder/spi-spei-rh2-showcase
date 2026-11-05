@@ -24,7 +24,39 @@ const UIModule = (() => {
   const btnInfoClose = document.getElementById("btn-info-close");
   const sidebar = document.getElementById("sidebar");
   const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+
+  // "Índice e escala" fica no painel direito só com largura para três colunas.
+  // A legenda do mapa acompanha o painel de baixo em mobile, onde a gaveta
+  // está quase sempre fechada. Mover os nós mantém os ids e os eventos.
+  const stackedPanels = window.matchMedia("(max-width: 1180px)");
+  const mobileLayout = window.matchMedia("(max-width: 768px)");
+
+  function placePanels() {
+    const indexPanel = document.getElementById("panel-index");
+    if (stackedPanels.matches) sidebar.insertBefore(indexPanel, document.getElementById("panel-map"));
+    else document.getElementById("sidebar-right").append(indexPanel);
+    const slot = document.getElementById(mobileLayout.matches ? "tl-map-legend" : "map-legend-slot");
+    slot.append(document.getElementById("raster-legend"));
+  }
+  placePanels();
+  stackedPanels.addEventListener("change", placePanels);
+  mobileLayout.addEventListener("change", placePanels);
   const btnMenu = document.getElementById("btn-menu");
+
+  // Cor de um valor numa rampa contínua (APP.*_COLOR_STOPS), limitada aos
+  // extremos da rampa. Sem valor, cinzento neutro.
+  function rampColor(stops, value) {
+    if (value == null) return "#9ca3af";
+    const v = Math.max(stops[0].at, Math.min(stops[stops.length - 1].at, value));
+    let i = 0;
+    while (i < stops.length - 2 && v > stops[i + 1].at) i++;
+    const a = stops[i], b = stops[i + 1];
+    const t = (v - a.at) / (b.at - a.at || 1);
+    const r = Math.round(a.color[0] + t * (b.color[0] - a.color[0]));
+    const g = Math.round(a.color[1] + t * (b.color[1] - a.color[1]));
+    const bl = Math.round(a.color[2] + t * (b.color[2] - a.color[2]));
+    return `rgb(${r},${g},${bl})`;
+  }
 
   function showLoading() {
     overlay.hidden = false;
@@ -44,10 +76,9 @@ const UIModule = (() => {
   // sempre SPEI-48, mas o mapa Climatológico já respeita a Escala desde
   // §22 (mesmos números que SPEI-48 quando Escala=48). "risco_spi"/
   // "risco_pdsi" são o mesmo composto (frequência+severidade+
-  // recorrência+tendência), por SPI/scPDSI em vez de SPEI — mesma rampa
-  // 0-1, só muda o rótulo. Só existem em modo "static" (climatológico):
-  // não têm evolução mensal própria (ver f3_controls.js →
-  // updateRasterModeAvailability()).
+  // recorrência), por SPI/scPDSI em vez de SPEI — mesma rampa
+  // 0-1, só muda o rótulo. Só têm climatologia: não têm evolução mensal
+  // própria (ver f3_controls.js → hasMonthlyView()).
   const RISCO_COMPOSTO_LABELS = { risco_spi: "Risco (SPI)", risco_pdsi: "Risco (scPDSI)" };
 
   function renderLegend(variable = "risco", mode = "monthly") {
@@ -162,5 +193,5 @@ const UIModule = (() => {
 
   wireSidebarDrawer();
 
-  return { showLoading, hideLoading, showError, renderLegend, showInfo, hideInfo };
+  return { rampColor, showLoading, hideLoading, showError, renderLegend, showInfo, hideInfo };
 })();

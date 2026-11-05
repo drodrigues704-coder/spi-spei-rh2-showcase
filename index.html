@@ -1,22 +1,23 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-PT">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SPI/SPEI/scPDSI RH2 — Monitorização de Seca</title>
+<title>Atlas de Seca — Região Hidrográfica 2 (Cávado / Ave / Leça)</title>
+<meta name="theme-color" content="#221b14">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="CSS/style.css" />
+<link rel="stylesheet" href="CSS/style.css?v=27" />
 </head>
 <body>
 
 <header id="app-header">
   <button id="btn-menu" type="button" title="Abrir/fechar controlos" aria-label="Abrir/fechar controlos">☰</button>
-  <h1>SPI / SPEI / scPDSI — RH2</h1>
-  <span id="app-subtitle">Monitorização de seca meteorológica — Cávado / Ave / Leça (1995–2025)</span>
+  <h1>Atlas de Seca <span class="h1-full">— Região Hidrográfica 2 (Cávado / Ave / Leça)</span><span class="h1-short">· RH2</span></h1>
+  <span id="app-subtitle">SPI, SPEI e scPDSI · 1995–2025</span>
   <button id="btn-basemap" type="button" title="Trocar mapa de fundo">🗺 Mapa: Escuro</button>
   <button id="btn-info" type="button" title="Sobre a app e os índices">ℹ Sobre</button>
 </header>
@@ -33,7 +34,67 @@
       <div id="station-meta"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="panel-map">
+      <h2>Mapa espacial</h2>
+      <div id="map-legend-slot"><div id="raster-legend"></div></div>
+      <p class="note">
+        Interpolação por IDW (não Kriging — sem autocorrelação espacial
+        significativa detetável nestes dados; ver o mapa como uma
+        estimativa aproximada entre estações, não uma medição contínua).
+      </p>
+    </section>
+
+  </aside>
+
+  <main id="map-stage">
+    <h2 id="map-title">A carregar…</h2>
+    <div id="map"></div>
+    <section id="timeline" aria-label="Faixa temporal 1995–2025" data-mode="climatology">
+      <div id="tl-head">
+        <div id="tl-controls">
+          <div id="tl-actions">
+            <button id="btn-climatology" type="button" aria-pressed="true">Climatologia</button>
+            <button id="btn-play" type="button" disabled>
+              <svg viewBox="0 0 14 14" width="12" height="12" aria-hidden="true"><path id="btn-play-icon" d="M3.5 1.5l9 5.5-9 5.5z" fill="currentColor"/></svg>
+              <span id="btn-play-text">Reproduzir</span>
+            </button>
+          </div>
+          <div id="tl-steppers">
+            <button id="btn-prev-month" type="button" disabled>Mês anterior</button>
+            <button id="btn-next-month" type="button" disabled>Mês seguinte</button>
+          </div>
+        </div>
+        <p id="tl-label">A carregar…</p>
+        <p id="tl-status" role="status"></p>
+      </div>
+      <div id="tl-strip">
+        <div id="tl-marks" hidden></div>
+        <div id="tl-track">
+          <canvas id="tl-canvas" aria-hidden="true"></canvas>
+          <input type="range" id="ctl-band-slider" min="0" max="371" value="371" step="1" aria-label="Mês do mapa" disabled>
+          <div id="tl-hover" aria-hidden="true" hidden></div>
+        </div>
+        <div id="tl-years" aria-hidden="true"></div>
+      </div>
+      <div id="tl-composite" hidden>
+        <p id="tl-composite-text"></p>
+        <button id="btn-composite-monthly" type="button"></button>
+      </div>
+      <div id="tl-map-legend"></div>
+      <details id="tl-legend-wrap" open>
+        <summary>Legenda e avisos</summary>
+        <ul id="tl-legend"></ul>
+        <p id="tl-observation-note" class="tl-text" hidden></p>
+        <p id="tl-break-note" class="tl-text" hidden></p>
+      </details>
+      <p id="tl-note" class="tl-text" hidden></p>
+      <p id="tl-warning" class="tl-text warning" hidden></p>
+    </section>
+  </main>
+
+  <aside id="sidebar-right">
+
+    <section class="panel" id="panel-index">
       <h2>Índice e escala</h2>
       <div class="row">
         <label>Índice
@@ -58,43 +119,21 @@
         </label>
       </div>
       <p class="note">
-        Estes dois seletores controlam tanto o gráfico abaixo (por
-        estação) como o mapa espacial em "Evolução mensal" — mudar um
-        muda os dois.
+        Índice e escala mudam o gráfico abaixo, o mapa e a faixa temporal.
+        A estação e o interruptor seguinte só mudam o gráfico.
       </p>
       <div class="row">
         <label><input type="radio" name="chart-source" value="station" checked> Esta estação</label>
         <label><input type="radio" name="chart-source" value="rh2"> RH2 (média)</label>
       </div>
       <canvas id="chart-series" height="220"></canvas>
-    </section>
-
-    <section class="panel">
-      <h2>Mapa espacial</h2>
-      <label class="row">
-        <input type="radio" name="raster-mode" value="static" checked> Climatológico (1995–2025) — usa o Índice acima
-      </label>
-      <label class="row">
-        <input type="radio" name="raster-mode" value="monthly"> Evolução mensal — usa o Índice/Escala acima
-      </label>
-      <div id="monthly-controls" hidden>
-        <input type="range" id="ctl-band-slider" min="0" max="0" value="0" step="1">
-        <div id="band-date-label">—</div>
-        <div class="row">
-          <button id="btn-play" type="button">▶ Reproduzir</button>
-        </div>
+      <div id="chart-export">
+        <button id="btn-export-png" type="button" disabled title="Exportação desativada">Exportar PNG</button>
+        <button id="btn-export-csv" type="button" disabled title="Exportação desativada">Exportar CSV</button>
       </div>
-      <div id="raster-legend"></div>
-      <p class="note">
-        Interpolação por IDW (não Kriging — sem autocorrelação espacial
-        significativa detetável nestes dados; ver o mapa como uma
-        estimativa aproximada entre estações, não uma medição contínua).
-      </p>
     </section>
 
   </aside>
-
-  <main id="map"></main>
 
 </div>
 
@@ -107,12 +146,20 @@
 
     <h2>Sobre esta app</h2>
     <p>
-      Monitorização de seca meteorológica na <b>RH2</b> — Região Hidrográfica
-      do Cávado, Ave e Leça (noroeste de Portugal Continental), a partir de
-      37 estações udométricas/climatológicas. Mostra a evolução de três
-      índices de seca reconhecidos internacionalmente (SPI, SPEI e scPDSI)
-      por estação (ou a média das 37, "RH2 (média)") e escala temporal, e
-      um mapa do risco de seca interpolado espacialmente entre estações.
+      Atlas histórico da seca na <b>RH2</b> — Região
+      Hidrográfica do Cávado, Ave e Leça (noroeste de Portugal Continental),
+      a partir de 37 estações udométricas/climatológicas. Mostra a evolução
+      de três índices de seca reconhecidos internacionalmente (SPI, SPEI e
+      scPDSI) por estação (ou a média das 37, "RH2 (média)") e escala
+      temporal, e um mapa do risco de seca interpolado espacialmente entre
+      estações. É um registo de 1995 a 2025, não um serviço em tempo real.
+      A seca agrícola e a hidrológica são lidas de forma indireta, pelas
+      escalas mais longas e pelo scPDSI: a app parte de precipitação e
+      temperatura e não usa medições de humidade do solo nem de caudais.
+    </p>
+    <p>
+      O atlas nunca ordena as secas por gravidade nem aponta "a pior de
+      sempre": essa ordem muda consoante a referência usada.
     </p>
     <p>
       Tanto o <b>SPI</b> como o <b>SPEI</b> e o <b>mapa de risco</b>
@@ -137,8 +184,8 @@
       semelhante ao SPI, mas parte do balanço entre precipitação e
       evapotranspiração (água perdida por temperatura/radiação), não só da
       precipitação. É por isso mais sensível ao efeito de temperaturas
-      altas no agravamento da seca — duas particularmente relevantes num
-      contexto de aquecimento climático.
+      altas no agravamento da seca, o que pesa num contexto de aquecimento
+      climático.
     </p>
 
     <h3>O que é o scPDSI?</h3>
@@ -155,7 +202,7 @@
       húmida como a RH2.
     </p>
 
-    <h3>Classes de severidade</h3>
+    <h3>Classes de severidade do SPI e do SPEI</h3>
     <table class="info-table">
       <tr><td><span class="swatch" style="background:#7f1d1d"></span></td><td>≤ −2.0</td><td>Seca extrema</td></tr>
       <tr><td><span class="swatch" style="background:#b91c1c"></span></td><td>−2.0 a −1.5</td><td>Seca severa</td></tr>
@@ -166,24 +213,69 @@
     </table>
     <p class="muted-small">Classificação de McKee et al. (1993), adotada pela Organização Meteorológica Mundial (OMM).</p>
 
+    <h3>Classes de severidade do scPDSI</h3>
+    <table class="info-table">
+      <tr><td><span class="swatch" style="background:#7f1d1d"></span></td><td>≤ −4</td><td>Seca extrema</td></tr>
+      <tr><td><span class="swatch" style="background:#b91c1c"></span></td><td>−4 a −3</td><td>Seca severa</td></tr>
+      <tr><td><span class="swatch" style="background:#f59e0b"></span></td><td>−3 a −2</td><td>Seca moderada</td></tr>
+      <tr><td><span class="swatch" style="background:#cca057"></span></td><td>−2 a −1</td><td>Seca ligeira</td></tr>
+      <tr><td><span class="swatch" style="background:#a3a3a3"></span></td><td>−1 a 1</td><td>Quase normal</td></tr>
+      <tr><td><span class="swatch" style="background:#82a4cf"></span></td><td>1 a 2</td><td>Ligeiramente húmido</td></tr>
+      <tr><td><span class="swatch" style="background:#60a5fa"></span></td><td>2 a 3</td><td>Moderadamente húmido</td></tr>
+      <tr><td><span class="swatch" style="background:#2563eb"></span></td><td>3 a 4</td><td>Muito húmido</td></tr>
+      <tr><td><span class="swatch" style="background:#1e3a8a"></span></td><td>≥ 4</td><td>Extremamente húmido</td></tr>
+    </table>
+    <p class="muted-small">Limiares de Palmer (1965): não são os do SPI/SPEI nem têm a mesma leitura.</p>
+
     <h3>Mapa espacial</h3>
     <p>
-      O modo <b>"Climatológico"</b> mostra a média/frequência de longo
-      prazo (1995–2025) do que estiver selecionado em "Índice": para o
-      <b>Risco composto — SPEI</b>, o índice composto (frequência, severidade,
-      recorrência e tendência da seca, 0 a 1) a partir do SPEI na escala
-      escolhida — a escala 48 dá exatamente o mesmo valor que os
-      marcadores das estações (a referência fixa, ver abaixo). Para
-      <b>SPI</b>/<b>SPEI</b>/<b>scPDSI</b>, a <b>% de meses em seca</b>
-      (não a média bruta do índice, que é sempre ~0 por construção e não
-      distingue zonas). O modo <b>"Evolução mensal"</b> interpola
-      espacialmente, mês a mês, o valor real do índice selecionado (o
-      scPDSI não tem escala — o seletor "Escala" fica sem efeito). A
-      superfície é interpolada por <b>IDW</b> a partir de 37 estações e
-      desenhada como <b>isobandas</b> (áreas coloridas entre limiares,
-      não pixels) — é uma estimativa aproximada entre estações, não uma
-      medição contínua; fora do contorno da RH2, os dados não são
+      A app abre na <b>climatologia</b>: o resumo de longo prazo do que
+      estiver selecionado em "Índice" e "Escala". Para <b>SPI</b>,
+      <b>SPEI</b> e <b>scPDSI</b>, a <b>% de meses em seca</b> (não a média
+      bruta do índice, que é sempre ~0 por construção e não distingue
+      zonas). Para o <b>Risco composto — SPEI</b>, o índice composto
+      (frequência, severidade e recorrência da seca, 0 a 1) a
+      partir do SPEI na escala escolhida; a escala 48 dá exatamente o mesmo
+      valor que os marcadores das estações (a referência fixa, ver abaixo).
+    </p>
+    <p>
+      Escolher um mês mostra a interpolação espacial do valor real do índice
+      nesse mês (o scPDSI não tem escala, e o seletor "Escala" fica sem
+      efeito). A superfície é interpolada por <b>IDW</b> a partir de 37
+      estações e desenhada como <b>isobandas</b> (áreas coloridas entre
+      limiares, não pixels): é uma estimativa aproximada entre estações, não
+      uma medição contínua, e fora do contorno da RH2 os dados não são
       mostrados.
+    </p>
+
+    <h3>Faixa temporal</h3>
+    <p>
+      Por baixo do mapa, cada célula é um mês da média das estações, no
+      índice e na escala escolhidos. Clicar na faixa, arrastar o cursor ou
+      usar as setas do teclado mostra esse mês no mapa; o botão
+      <b>Climatologia</b> volta à vista inicial. Os meses sem mapa ficam
+      riscados e o cursor salta-os no sentido do movimento.
+    </p>
+    <p>
+      Os <b>episódios</b> marcados por cima da faixa são calculados da média
+      das estações, em SPI e SPEI nas escalas de 6 e 12 meses: pelo menos 2
+      meses em ≤ −1 dentro de uma sequência negativa contínua (McKee et al.,
+      1993). Aparecem por ordem cronológica e não são ordenados por
+      gravidade, porque essa ordem muda entre produtos de referência. O
+      scPDSI não tem episódios marcados, porque continua afetado pela quebra
+      nas séries.
+    </p>
+    <p>
+      A frequência de seca compara cada estação com o seu próprio período de
+      referência. Não mede se uma zona é mais seca do que outra em quantidade
+      de chuva.
+    </p>
+    <p>
+      Nos índices, a faixa usa as <b>classes discretas</b> das tabelas acima; no Risco, usa a mesma rampa contínua do mapa. O mapa
+      mensal usa uma <b>rampa contínua</b> com a mesma família de cores, que
+      transita entre limiares, e no scPDSI não tem o tom próprio da classe
+      "ligeira": o mesmo valor pode por isso ter um tom diferente na faixa e
+      no mapa, e a leitura exata é a do título do mapa.
     </p>
 
     <h3>Risco composto por índice/escala</h3>
@@ -191,13 +283,15 @@
       O SPEI-48 sozinho só capta risco estrutural/hidrológico de longo
       prazo e pode esconder secas curtas e frequentes numa estação que
       pareça "saudável" a 48 meses — por isso o <b>Risco composto — SPEI</b>
-      no modo Climatológico já respeita a Escala escolhida (acima), em
-      vez de ficar preso aos 48 meses. As opções <b>"Risco composto —
-      SPI/scPDSI"</b> dão a mesma leitura a partir de outro índice. Só
-      existem no modo <b>"Climatológico"</b> (são um resumo estático,
-      sem evolução mês a mês própria) — o gráfico mostra, em
-      alternativa, a série do índice que alimenta esse risco (SPI ou
-      scPDSI). Os <b>marcadores das estações</b> mostram sempre o valor
+      na climatologia já respeita a Escala escolhida (acima), em vez de
+      ficar preso aos 48 meses. O mesmo item mostra duas grandezas: na
+      climatologia, o composto de 3 componentes; num mês, (2 − SPEI) / 4
+      limitado a 0–1, e a faixa mostra esse valor mês a mês. As opções <b>"Risco composto — SPI/scPDSI"</b> dão a leitura de
+      longo prazo a partir de outro índice. Só têm climatologia (são um
+      resumo, sem evolução mês a mês própria): a faixa dá lugar a um botão
+      para ver o índice de base e o gráfico mostra, em alternativa, a série
+      que alimenta esse risco (SPI ou scPDSI). Os <b>marcadores das
+      estações</b> mostram sempre o valor
       de referência (SPEI-48), independentemente do que estiver
       selecionado no mapa.
     </p>
@@ -205,11 +299,19 @@
     <h3>Limitações a ter em conta</h3>
     <ul>
       <li>37 das 48 estações da RH2 com precipitação e temperatura simultâneas têm dados suficientes para os índices (as restantes não cumprem os critérios mínimos de completude).</li>
-      <li>Um mês só conta como observação real se tiver pelo menos 80% dos dias com registo; abaixo disso é tratado como falha e preenchido pela média sazonal da estação (cerca de um terço dos meses, no total).</li>
+      <li>Os índices assentam nos valores observados nas estações do SNIRH, que nunca são alterados. Nos meses sem observação válida (menos de 80% dos dias com registo, ou excluídos pelo controlo de qualidade), cerca de 36% do total, a precipitação é estimada com a reanálise CERRA-Land, ajustada ao nível local de cada estação, e esses meses estão assinalados. Entre 2010 e 2014 e em 2017–18 quase não há observações, por isso os valores desses anos são sobretudo reconstruídos.</li>
+      <li>Entre 2001 e 2009, a maioria das estações passa a registar menos cerca de um terço da precipitação face às normais do IPMA próximas. A causa está por confirmar. Os valores observados não foram alterados: no SPI e no SPEI, cada estação é comparada com o seu próprio período antes e depois dessa mudança. Por isso, estes índices mostram secas relativas a cada período, mas não servem para ler tendências de longo prazo. O scPDSI não tem este ajuste.</li>
       <li>SPI, SPEI e índice de risco atingem agora os ≥30 anos de registo recomendados pela OMM (1995–2025) — mas ainda com cautela nas escalas 24/48 meses perto do início da série.</li>
-      <li>2012-10 a 2013-10 (13 meses) têm uma lacuna real na rede de estações SNIRH, não um erro dos dados aqui apresentados.</li>
-      <li>17 leituras mensais de março de 2001 (várias estações de montanha) foram removidas por serem estatisticamente incompatíveis com o resto do registo de cada estação (provável artefacto de sensor) e substituídas pela média sazonal.</li>
+      <li>Um mês é excluído quando a estação regista zero em dias de chuva forte nas estações vizinhas. Excluem-se também 53 meses da estação Gralhós (03K/02UG), entre 1997 e 2002, porque repetem os valores da estação Zebral (04I/03UG).</li>
       <li>O mapa de risco é uma interpolação estatística (IDW), não uma medição direta entre estações.</li>
+    </ul>
+
+    <h3>Fontes de dados</h3>
+    <ul>
+      <li><b>Precipitação observada:</b> SNIRH, Sistema Nacional de Informação de Recursos Hídricos.</li>
+      <li><b>Precipitação de preenchimento:</b> CERRA-Land (Copernicus Climate Change Service, C3S), licença CC-BY, DOI 10.24381/cds.a7f3cd0b. Valores agregados por mês e corrigidos ao nível local de cada estação. Contém informação modificada do Copernicus Climate Change Service (2026).</li>
+      <li><b>Temperatura e radiação:</b> ERA5-Land (Copernicus Climate Change Service, C3S).</li>
+      <li><b>Normais climatológicas 1991–2020, usadas como controlo:</b> IPMA, Instituto Português do Mar e da Atmosfera.</li>
     </ul>
 
     <h3>Bibliografia</h3>
@@ -228,11 +330,12 @@
         Climatology, American Meteorological Society, 179–184.
         Classificação de severidade adotada pela OMM (WMO-No. 1090, 2012).
         Nas escalas 1, 3 e 6, a distribuição gamma é ajustada por mês do
-        calendário (com alargamento da amostra quando há poucos valores
-        reais), aproximando-se da prática da OMM/IPMA; nas escalas 12, 24
-        e 48 mantém-se o ajuste à série completa de cada estação, sem
-        prejuízo prático, já que a sazonalidade se cancela estruturalmente
-        numa janela rolante desta duração.
+        calendário, aproximando-se da prática da OMM/IPMA; nas escalas 12,
+        24 e 48 é ajustada ao conjunto dos meses, sem prejuízo prático, já
+        que a sazonalidade se cancela estruturalmente numa janela rolante
+        desta duração. Em todas, o ajuste usa os meses observados e os
+        preenchidos e é feito em separado antes e depois da quebra de cada
+        estação, quando existe.
       </li>
       <li>
         <b>SPEI</b> — Vicente-Serrano, S.M., Beguería, S., López-Moreno,
@@ -250,7 +353,9 @@
         <b>Evapotranspiração potencial (entrada do SPEI)</b> — Hargreaves,
         G.H., Samani, Z.A. (1985). <i>Reference Crop Evapotranspiration
         from Temperature.</i> Applied Engineering in Agriculture, 1(2),
-        96–99.
+        96–99. A implementação usa a radiação solar à superfície em vez da
+        radiação extraterrestre, por isso a evapotranspiração fica acima da
+        fórmula de referência; o efeito medido no SPEI é pequeno.
       </li>
       <li>
         <b>scPDSI</b> — Wells, N., Goddard, S., Hayes, M.J. (2004).
@@ -281,10 +386,11 @@
       </li>
     </ul>
     <p class="muted-small">
-      O índice de risco composto (frequência, severidade, recorrência e
-      tendência) é uma construção interna deste projeto — só os limiares
-      de classe (McKee et al., 1993) vêm da literatura; a fórmula de
-      composição não corresponde a um índice publicado.
+      O índice de risco combina a frequência (37,5%), a severidade (37,5%) e
+      a recorrência (25%) das secas. Não inclui tendência, porque a quebra
+      nas séries não o permite. A variante do scPDSI não tem ajuste por
+      período. É uma construção interna deste projeto, sem validação externa:
+      só os limiares de classe (McKee et al., 1993) vêm da literatura.
     </p>
   </div>
 </div>
@@ -302,13 +408,14 @@
      isto, uma alteração a estes scripts só aparecia depois de o
      utilizador limpar a cache manualmente. Subir este número sempre
      que qualquer um destes ficheiros for alterado. -->
-<script src="js/f1_config.js?v=14"></script>
-<script src="js/f2_map.js?v=14"></script>
-<script src="js/f3_controls.js?v=14"></script>
-<script src="js/f4_raster.js?v=14"></script>
-<script src="js/f5_charts.js?v=14"></script>
-<script src="js/f6_ui.js?v=15"></script>
-<script src="js/f7_main.js?v=14"></script>
+<script src="js/f1_config.js?v=27"></script>
+<script src="js/f2_map.js?v=27"></script>
+<script src="js/f3_controls.js?v=27"></script>
+<script src="js/f4_raster.js?v=27"></script>
+<script src="js/f5_charts.js?v=27"></script>
+<script src="js/f6_ui.js?v=27"></script>
+<script src="js/f8_timeline.js?v=27"></script>
+<script src="js/f7_main.js?v=27"></script>
 
 </body>
 </html>

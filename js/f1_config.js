@@ -14,24 +14,68 @@ nenhum módulo deve escrever URLs ou constantes diretamente.
 */
 
 const APP = {
-  // SHOWCASE: sem backend FastAPI (GitHub Pages só serve ficheiros
-  // estáticos) — API_BASE aponta para um snapshot pré-gerado
-  // (scripts/export_showcase.py no repo privado), 1 ficheiro .json por
-  // rota (ex.: /raster/monthly/spi/12 -> ./api/raster/monthly/spi/12.json).
-  // Ver apiGet() em f7_main.js e fetchMeta() em f4_raster.js.
+  // Base da API (mesma origem que serve este index.html, via b1_app.py).
   API_BASE: "./api",
   FILES_BASE: "./files",
 
   // Classes de seca (McKee et al. 1993 / OMM) — usadas no gráfico e na legenda.
   DROUGHT_CLASSES: [
-    { max: -2.0, label: "Extrema", color: "#7f1d1d" },
-    { max: -1.5, label: "Severa", color: "#b91c1c" },
-    { max: -1.0, label: "Moderada", color: "#f59e0b" },
-    { max: 1.0, label: "Quase normal", color: "#a3a3a3" },
-    { max: 1.5, label: "Moderadamente húmido", color: "#60a5fa" },
-    { max: 2.0, label: "Muito húmido", color: "#2563eb" },
-    { max: Infinity, label: "Extremamente húmido", color: "#1e3a8a" },
+    { max: -2.0, label: "Extrema", level: "extremo", color: "#7f1d1d" },
+    { max: -1.5, label: "Severa", level: "severo", color: "#b91c1c" },
+    { max: -1.0, label: "Moderada", level: "moderado", color: "#f59e0b" },
+    { max: 1.0, label: "Quase normal", level: "quase normal", color: "#a3a3a3" },
+    { max: 1.5, label: "Moderadamente húmido", level: "moderadamente húmido", color: "#60a5fa" },
+    { max: 2.0, label: "Muito húmido", level: "muito húmido", color: "#2563eb" },
+    { max: Infinity, label: "Extremamente húmido", level: "extremamente húmido", color: "#1e3a8a" },
   ],
+
+  // Classes de Palmer do scPDSI (faixa temporal e título do mapa). Não
+  // usar DROUGHT_CLASSES aqui: os limiares são outros. `max` é limite
+  // incluído (v <= max); `maxExclusive` é excluído (v < maxExclusive),
+  // porque o lado húmido inclui o limite inferior de cada classe.
+  PDSI_CLASSES: [
+    { max: -4, label: "Extrema", level: "extremo", color: "#7f1d1d" },
+    { max: -3, label: "Severa", level: "severo", color: "#b91c1c" },
+    { max: -2, label: "Moderada", level: "moderado", color: "#f59e0b" },
+    { max: -1, label: "Ligeira", level: "ligeiro", color: "#cca057" },
+    { maxExclusive: 1, label: "Quase normal", level: "quase normal", color: "#a3a3a3" },
+    { maxExclusive: 2, label: "Ligeiramente húmido", level: "ligeiramente húmido", color: "#82a4cf" },
+    { maxExclusive: 3, label: "Moderadamente húmido", level: "moderadamente húmido", color: "#60a5fa" },
+    { maxExclusive: 4, label: "Muito húmido", level: "muito húmido", color: "#2563eb" },
+    { max: Infinity, label: "Extremamente húmido", level: "extremamente húmido", color: "#1e3a8a" },
+  ],
+
+  // Margem à volta da RH2 até onde o mapa se pode mover (fração da extensão).
+  MAP_BOUNDS_PAD: 0.1,
+
+  // Índice-base de cada risco composto (faixa, título e período).
+  RISK_BASE_INDEX: { risco_mensal: "spei", risco_spi: "spi", risco_pdsi: "pdsi" },
+
+  // Calendário fixo da faixa temporal: um mês por posição do slider
+  // (0 = 1995-01, 371 = 2025-12). A disponibilidade de cada mês vem
+  // sempre dos dados (isoband_dates e série), nunca de datas escritas aqui.
+  CALENDAR_START_YEAR: 1995,
+  CALENDAR_END_YEAR: 2025,
+
+  // month_info (opcional, ver scripts/frontend/README.md): frac_preenchida,
+  // fração da janela de cálculo preenchida. Abaixo de MEDIUM a confiança é
+  // alta e não há padrão; de MEDIUM a RECONSTRUCTED é média; daí para cima o
+  // valor é tratado como reconstruído pela fonte de preenchimento.
+  MONTH_INFO_MEDIUM: 0.3,
+  MONTH_INFO_RECONSTRUCTED: 0.75,
+  FILL_SOURCE_NAME: "CERRA-Land",
+
+  // Texto permanente junto à faixa, mostrado quando há month_info e dados de
+  // episódios para o índice. String vazia: não mostra nada.
+  OBSERVATION_NOTE: "Em períodos sem observações, a ausência de episódio não significa ausência de seca.",
+
+  // Aviso permanente junto à faixa; o texto completo está no Sobre.
+  SHOW_SERIES_BREAK_NOTE: true,
+  SERIES_BREAK_NOTE:
+    "Comparação por período, antes e depois da quebra nos registos (2001–2009): os índices mostram secas, não tendências de longo prazo.",
+
+  // Limiar do contador "N de M estações" do título do mapa, por índice.
+  STATION_DROUGHT_LIMIT: { spi: -1, spei: -1, pdsi: -2 },
 
   // Rampa de cor do raster de risco (0 = baixo risco, 1 = alto risco).
   RISK_COLOR_STOPS: [

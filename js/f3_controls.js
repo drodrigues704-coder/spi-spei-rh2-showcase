@@ -8,12 +8,11 @@ Daniel Rodrigues
 
 Descrição
 ---------
-Controlos da interface: seletor de estação, índice, escala e modo de
-raster (climatológico/mensal) e slider de banda/data. "Índice" e
-"Escala" são partilhados pelo gráfico e pelo mapa em modo "Evolução
-mensal" (ver docs/ai-team/n4_PROJECT_REFERENCE.md §17 — antes o mapa
-tinha o seu próprio seletor de escala, independente). Só lê/escreve o
-DOM — não sabe nada sobre a API nem sobre Leaflet/Chart.js.
+Controlos da barra lateral: seletor de estação, índice e escala. "Índice"
+e "Escala" são partilhados pelo gráfico, pelo mapa e pela faixa temporal
+(ver docs/ai-team/n4_PROJECT_REFERENCE.md §17). O slider e os botões da
+faixa estão em f8_timeline.js. Só lê/escreve o DOM — não sabe nada sobre a
+API nem sobre Leaflet/Chart.js.
 ===============================================================================
 */
 
@@ -24,11 +23,6 @@ const ControlsModule = (() => {
     chartSource: document.getElementsByName("chart-source"),
     index: document.getElementById("ctl-index"),
     scale: document.getElementById("ctl-scale"),
-    rasterMode: document.getElementsByName("raster-mode"),
-    monthlyControls: document.getElementById("monthly-controls"),
-    bandSlider: document.getElementById("ctl-band-slider"),
-    bandDateLabel: document.getElementById("band-date-label"),
-    playButton: document.getElementById("btn-play"),
   };
 
   function populateStations(stations) {
@@ -76,9 +70,7 @@ const ControlsModule = (() => {
   // modo Climatológico (a mesma fórmula, o mesmo SPEI) — em vez de 2
   // entradas a mostrar exatamente o mesmo quando Escala=48, fundidas
   // numa só (ver getSelectedVariable() e f7_main.js::loadRaster()).
-  // "risco_spi"/"risco_pdsi" só existem em modo "static" (climatológico)
-  // — não têm evolução mensal própria, ver
-  // updateRasterModeAvailability() abaixo.
+  // "risco_spi"/"risco_pdsi" só têm climatologia — ver hasMonthlyView().
   const RISCO_COMPOSTO_INDICES = ["risco_spi", "risco_pdsi"];
 
   function getSelectedIndex() {
@@ -126,46 +118,14 @@ const ControlsModule = (() => {
     el.scale.disabled = index === "pdsi" || index === "risco_pdsi";
   }
 
-  // "risco_spi"/"risco_pdsi" só existem em modo "static" (climatológico)
-  // — não há raster mensal próprio para eles (§22).
-  // Desativa visualmente o rádio "Evolução mensal" e força "static" se
-  // estava selecionado, em vez de deixar pedir uma combinação que não
-  // existe (404) — mesmo espírito de updateScaleAvailability() acima.
-  function updateRasterModeAvailability() {
-    const isRiscoComposto = RISCO_COMPOSTO_INDICES.includes(getSelectedIndex());
-    for (const radio of el.rasterMode) {
-      radio.disabled = isRiscoComposto && radio.value === "monthly";
-    }
-    if (isRiscoComposto && getRasterMode() === "monthly") {
-      for (const radio of el.rasterMode) {
-        if (radio.value === "static") radio.checked = true;
-      }
-      updateMonthlyControlsVisibility();
-    }
+  // Só "risco_spi"/"risco_pdsi" não têm vista mensal própria: pedir-lhes
+  // metadados mensais daria 404.
+  function hasMonthlyView() {
+    return !RISCO_COMPOSTO_INDICES.includes(getSelectedIndex());
   }
 
-  function getRasterMode() {
-    for (const radio of el.rasterMode) {
-      if (radio.checked) return radio.value; // "static" | "monthly"
-    }
-    return "static";
-  }
-
-  function updateMonthlyControlsVisibility() {
-    el.monthlyControls.hidden = getRasterMode() !== "monthly";
-  }
-
-  function setBandRange(count) {
-    el.bandSlider.max = String(Math.max(count - 1, 0));
-    el.bandSlider.value = "0";
-  }
-
-  function getBandIndex() {
-    return parseInt(el.bandSlider.value, 10);
-  }
-
-  function setBandDateLabel(dateStr) {
-    el.bandDateLabel.textContent = dateStr || "—";
+  function getSelectedIndexLabel() {
+    return el.index.options[el.index.selectedIndex].text;
   }
 
   return {
@@ -175,15 +135,11 @@ const ControlsModule = (() => {
     setStationMeta,
     getChartSource,
     getSelectedIndex,
+    getSelectedIndexLabel,
+    hasMonthlyView,
     getSelectedVariable,
     getChartIndex,
     getSelectedScale,
     updateScaleAvailability,
-    updateRasterModeAvailability,
-    getRasterMode,
-    updateMonthlyControlsVisibility,
-    setBandRange,
-    getBandIndex,
-    setBandDateLabel,
   };
 })();

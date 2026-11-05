@@ -51,6 +51,24 @@ const MapModule = (() => {
   let boundaryLayer = null;
   let basemapLayer = null;
   let basemapIndex = 0;
+  let regionBounds = null;
+
+  // O mapa é uma análise à RH2: não se afasta dela. O zoom mínimo depende do
+  // tamanho do mapa, por isso volta a calcular-se quando este muda.
+  function lockToRegion() {
+    if (!regionBounds) return;
+    // Sem altura ou largura útil (janela muito baixa), o cálculo não faz sentido.
+    const size = map.getSize();
+    if (size.x <= 32 || size.y <= 32) return;
+    const wasAtMinimum = map.getZoom() <= map.getMinZoom();
+    // getBoundsZoom limita o resultado ao mínimo atual, que por isso só subiria.
+    map.options.minZoom = 0;
+    const fit = map.getBoundsZoom(regionBounds, false, L.point(32, 32));
+    map.setMaxBounds(regionBounds.pad(APP.MAP_BOUNDS_PAD));
+    map.setMinZoom(fit);
+    // Quem não aproximou o mapa continua a ver a região inteira.
+    if (wasAtMinimum) map.fitBounds(regionBounds, { padding: [16, 16], animate: false });
+  }
 
   function applyBasemap(index) {
     const bm = BASEMAPS[index];
@@ -65,7 +83,7 @@ const MapModule = (() => {
   }
 
   function init() {
-    map = L.map("map", { zoomControl: true }).setView(APP.MAP_CENTER, APP.MAP_ZOOM);
+    map = L.map("map", { zoomControl: true, maxBoundsViscosity: 1 }).setView(APP.MAP_CENTER, APP.MAP_ZOOM);
 
     applyBasemap(0);
 
@@ -96,7 +114,9 @@ const MapModule = (() => {
         style: { color: "#38bdf8", weight: 2, opacity: 0.9, fill: false },
       }).addTo(map);
 
-      map.fitBounds(boundaryLayer.getBounds(), { padding: [16, 16] });
+      regionBounds = boundaryLayer.getBounds();
+      map.fitBounds(regionBounds, { padding: [16, 16] });
+      lockToRegion();
     } catch (err) {
       console.error("Não foi possível carregar o contorno da RH2:", err);
     }
@@ -117,5 +137,10 @@ const MapModule = (() => {
     return stationsLayer;
   }
 
-  return { init, getMap, setRasterLayer, getStationsLayer, cycleBasemap };
+  function refreshSize() {
+    map.invalidateSize();
+    lockToRegion();
+  }
+
+  return { init, getMap, setRasterLayer, getStationsLayer, cycleBasemap, refreshSize };
 })();

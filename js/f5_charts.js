@@ -19,6 +19,8 @@ sabe nada sobre a API.
 */
 
 const ChartsModule = (() => {
+  const YEAR_TICKS = 5;
+
   let chart = null;
 
   // Tom quente neutro (--text-dim aproximado) para os limiares tracejados
@@ -110,12 +112,20 @@ const ChartsModule = (() => {
           x: {
             type: "category",
             grid: { color: WARM_NEUTRAL_GRID },
+            // Marcas espaçadas de ponta a ponta: o eixo mostra sempre o
+            // último ano da série, que o autoSkip do Chart.js omitia.
+            afterBuildTicks: (axis) => {
+              const last = axis.getLabels().length - 1;
+              const count = Math.min(YEAR_TICKS, last + 1);
+              axis.ticks = Array.from({ length: count }, (_, i) => ({
+                value: count > 1 ? Math.round((i * last) / (count - 1)) : 0,
+              }));
+            },
             ticks: {
               color: WARM_NEUTRAL_TEXT,
               font: { family: FONT_MONO },
               maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 10,
+              autoSkip: false,
               // Datas guardadas como "AAAA-MM-DD" — mostra só o ano no
               // eixo (usa this.getLabelForValue, não o array `labels` do
               // closure, porque este callback também corre depois de um
