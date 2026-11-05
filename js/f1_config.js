@@ -79,11 +79,11 @@ const APP = {
 
   // Rampa de cor do raster de risco (0 = baixo risco, 1 = alto risco).
   RISK_COLOR_STOPS: [
-    { at: 0.0, color: [26, 152, 80] },   // verde — baixo risco
-    { at: 0.35, color: [217, 239, 139] },
-    { at: 0.5, color: [255, 255, 191] }, // amarelo — moderado
-    { at: 0.65, color: [252, 141, 89] },
-    { at: 1.0, color: [215, 48, 39] },   // vermelho — alto risco
+    // Sequencial, escuro = mais risco: legível com daltonismo. Espelha p1_config.py.
+    { at: 0.0, color: [255, 255, 229] },
+    { at: 0.33, color: [254, 217, 118] },
+    { at: 0.66, color: [240, 59, 32] },
+    { at: 1.0, color: [127, 29, 29] },
   ],
 
   // Rampa divergente do SPI/SPEI espacializados (-3 a 3) — mesmas cores

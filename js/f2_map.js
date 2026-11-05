@@ -111,6 +111,7 @@ const MapModule = (() => {
 
       boundaryLayer = L.geoJSON(geojson, {
         pane: APP.PANE_BOUNDARY,
+        interactive: false,
         style: { color: "#38bdf8", weight: 2, opacity: 0.9, fill: false },
       }).addTo(map);
 
@@ -119,6 +120,7 @@ const MapModule = (() => {
       lockToRegion();
     } catch (err) {
       console.error("Não foi possível carregar o contorno da RH2:", err);
+      UIModule.showError("Não foi possível carregar o contorno da RH2: o mapa fica sem esse limite.");
     }
   }
 

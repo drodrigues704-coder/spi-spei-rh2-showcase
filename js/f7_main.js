@@ -28,6 +28,7 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
   // calendários diferentes (SPI-48 começa em 1998-12, SPI-48 não tem mapa
   // em 2006-01) e isso vem dos dados, não deste código.
   const view = { mode: "climatology", date: null }; // mode: "climatology" | "month"
+  let urlReady = false; // o URL só se escreve depois de se ler o que trazia
   let viewError = ""; // última falha ao desenhar uma vista; limpa-se no pedido seguinte
   let rendered = null; // o que está de facto desenhado no mapa — única fonte do título
   let monthly = { key: null, state: "none", dates: [], urlByDate: new Map() };
@@ -50,13 +51,10 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
       if (s.latitude == null || s.longitude == null) return;
       const marker = L.circleMarker([s.latitude, s.longitude], {
         pane: APP.PANE_STATIONS, // sempre acima das isobandas/contorno — ver f1_config.js
-        radius: 7,
-        color: "#f8fafc",
-        weight: 1.5,
-        fillColor: UIModule.rampColor(APP.RISK_COLOR_STOPS, s.indice_risco),
-        fillOpacity: 0.95,
+        ...MARKER_STYLE,
         className: "station-marker", // distingue dos polígonos de isobandas (ambos SVG <path>)
       });
+      markers.set(s.station, marker);
 
       marker.bindTooltip(s.nome, { direction: "top", offset: [0, -6] });
       marker.bindPopup(`
@@ -71,14 +69,46 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
         </div>
       `);
 
-      marker.on("mouseover", () => marker.setStyle({ radius: 9, weight: 2 }));
-      marker.on("mouseout", () => marker.setStyle({ radius: 7, weight: 1.5 }));
-      marker.on("click", () => {
+      const choose = () => {
         ControlsModule.el.station.value = s.station;
         onStationChange();
-      });
+      };
+      marker.on("mouseover", () => marker.setStyle({ radius: MARKER_SELECTED.radius }));
+      marker.on("mouseout", () => marker.setStyle(markerStyleFor(s.station)));
+      marker.on("click", choose);
       layer.addLayer(marker);
+      const element = marker.getElement();
+      if (element) {
+        element.setAttribute("role", "button");
+        element.setAttribute("tabindex", "0");
+        element.setAttribute("aria-label", `Estação ${s.nome}, ${s.concelho || s.bacia || "RH2"}. Selecionar.`);
+        element.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") marker.closePopup();
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          event.stopPropagation();
+          choose();
+          marker.openPopup();
+        });
+      }
     });
+    highlightStation();
+  }
+
+  // Marcadores neutros: as cores do mapa pertencem ao índice escolhido. Só se
+  // distingue a estação selecionada, a que o painel e o gráfico estão a mostrar.
+  const MARKER_STYLE = { radius: 6, color: "#f8fafc", weight: 1.5, fillColor: "#221b14", fillOpacity: 0.9 };
+  const MARKER_SELECTED = { radius: 9, color: "#221b14", weight: 2.5, fillColor: "#f8fafc", fillOpacity: 1 };
+  const markers = new Map();
+  const markerStyleFor = (station) => (station === ControlsModule.getSelectedStation() ? MARKER_SELECTED : MARKER_STYLE);
+
+  function highlightStation() {
+    const selected = ControlsModule.getSelectedStation();
+    markers.forEach((marker, station) => marker.setStyle(markerStyleFor(station)));
+    // bringToFront volta a inserir o elemento no SVG: com foco de teclado, isso
+    // tirava-lhe o foco e baralhava a ordem de Tab entre as estações.
+    const marker = markers.get(selected);
+    if (!marker?.getElement()?.matches(":focus-visible")) marker?.bringToFront();
   }
 
   // Uma resposta atrasada de outra estação não pode ficar com o nome desta.
@@ -88,6 +118,8 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
     const station = ControlsModule.getSelectedStation();
     if (!station) return;
     const myId = ++stationRequestId;
+    highlightStation();
+    syncUrl();
     try {
       UIModule.showLoading();
       const series = await apiGet(`/series/${station}`);
@@ -120,6 +152,46 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
     const index = ControlsModule.getChartIndex();
     const scale = ControlsModule.getSelectedScale();
     ChartsModule.render(station, series, index, scale);
+  }
+
+  // Estado no URL, para partilhar uma vista exata. Lê-se uma vez, no arranque.
+  function readUrlState() {
+    const params = new URLSearchParams(location.search);
+    const has = (select, value) => value != null && [...select.options].some((o) => o.value === value);
+    if (has(ControlsModule.el.index, params.get("indice"))) ControlsModule.el.index.value = params.get("indice");
+    if (has(ControlsModule.el.scale, params.get("escala"))) ControlsModule.el.scale.value = params.get("escala");
+    ControlsModule.updateScaleAvailability();
+    if (/^\d{4}-(0[1-9]|1[0-2])$/.test(params.get("mes") || "")) {
+      view.mode = "month";
+      view.date = `${params.get("mes")}-01`;
+    }
+    if (params.get("grafico") === "rh2") document.querySelector('input[name="chart-source"][value="rh2"]').checked = true;
+    return { station: params.get("estacao") };
+  }
+
+  // Agrupado porque o Safari recusa mais de 100 replaceState em 10 s, e arrastar
+  // o slider chega lá. O URL é uma conveniência: nunca pode travar o desenho.
+  let urlTimer = null;
+
+  function syncUrl() {
+    if (!urlReady) return;
+    clearTimeout(urlTimer);
+    urlTimer = setTimeout(writeUrl, 200);
+  }
+
+  function writeUrl() {
+    const sel = readSelection();
+    const params = new URLSearchParams({ indice: sel.index });
+    if (sel.index !== "pdsi" && sel.index !== "risco_pdsi") params.set("escala", sel.scale);
+    if (view.mode === "month" && view.date) params.set("mes", view.date.slice(0, 7));
+    const station = ControlsModule.getSelectedStation();
+    if (station) params.set("estacao", station);
+    if (ControlsModule.getChartSource() === "rh2") params.set("grafico", "rh2");
+    try {
+      history.replaceState(null, "", `${location.pathname}?${params}`);
+    } catch (err) {
+      console.warn("URL não atualizado:", err);
+    }
   }
 
   function readSelection() {
@@ -176,6 +248,8 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
   // mensal substituem a faixa.
   function refreshTimeline() {
     const sel = readSelection();
+    ChartsModule.setCursor(view.mode === "month" ? view.date : null);
+    syncUrl();
     if (!ControlsModule.hasMonthlyView()) {
       TimelineModule.update({
         mode: "climatology",
@@ -458,7 +532,10 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
         loadView();
       },
       onCompositeTarget: (index) => {
+        // O botão promete "mês a mês": abre no mês mais recente desse índice.
         ControlsModule.el.index.value = index;
+        view.mode = "month";
+        view.date = null;
         TimelineModule.requestSliderFocus();
         onIndexOrScaleChange();
       },
@@ -467,12 +544,15 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
     // "Esta estação" / "RH2 (média)" (§23) — só afeta o gráfico, o mapa
     // continua a seguir sempre a estação selecionada em "Estação".
     for (const radio of ControlsModule.el.chartSource) {
-      radio.addEventListener("change", renderChart);
+      radio.addEventListener("change", () => {
+        renderChart();
+        syncUrl();
+      });
     }
 
     document.getElementById("btn-basemap").addEventListener("click", () => {
       const label = MapModule.cycleBasemap();
-      document.getElementById("btn-basemap").textContent = `🗺 Mapa: ${label}`;
+      document.getElementById("btn-basemap").textContent = `Mapa: ${label}`;
     });
 
     // Leaflet guarda o tamanho do contentor no momento em que o mapa é
@@ -510,6 +590,12 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
         updateTitle();
       });
 
+    const urlState = readUrlState();
+    ChartsModule.setDateHandler((date) => {
+      if (!ControlsModule.hasMonthlyView() || !monthly.dates.length) return;
+      goToEpisode(date);
+    }, () => ControlsModule.hasMonthlyView());
+
     try {
       UIModule.showLoading();
       const stations = await apiGet("/stations");
@@ -518,7 +604,9 @@ data do mapa) — nenhum outro módulo guarda estado partilhado.
       ControlsModule.populateStations(stations);
       addStationMarkers(stations);
       if (stations.length) {
-        ControlsModule.el.station.value = stations[0].station;
+        const fromUrl = stations.some((s) => s.station === urlState.station);
+        ControlsModule.el.station.value = fromUrl ? urlState.station : stations[0].station;
+        urlReady = true;
         await onStationChange();
       }
       await loadView();

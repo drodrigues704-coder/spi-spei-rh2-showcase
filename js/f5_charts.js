@@ -66,6 +66,33 @@ const ChartsModule = (() => {
     return { label: index.toUpperCase(), suggestedMin: -3, suggestedMax: 3, annotations: buildAnnotations([-2, -1.5, -1, 1, 1.5, 2]) };
   }
 
+  // Mês mostrado no mapa, como linha vertical; clicar no gráfico escolhe um mês.
+  let cursorDate = null;
+  let onDatePicked = null;
+  let canPickDate = () => false;
+
+  function applyCursor() {
+    const annotations = chart.options.plugins.annotation.annotations;
+    if (cursorDate && chart.data.labels.includes(cursorDate)) {
+      annotations.cursor = { type: "line", xMin: cursorDate, xMax: cursorDate, borderColor: "#ede4d3", borderWidth: 1.5 };
+    } else {
+      delete annotations.cursor;
+    }
+  }
+
+  function setCursor(date) {
+    if (date === cursorDate) return;
+    cursorDate = date;
+    if (!chart) return;
+    applyCursor();
+    chart.update("none");
+  }
+
+  function setDateHandler(handler, canPick) {
+    onDatePicked = handler;
+    canPickDate = canPick;
+  }
+
   function render(station, series, index, scale) {
     const entries = (series[index] || [])
       .filter((e) => e.scale === scale)
@@ -74,7 +101,8 @@ const ChartsModule = (() => {
     const labels = entries.map((e) => e.date);
     const values = entries.map((e) => e.value);
     const cfg = axisConfigFor(index);
-    const label = `${cfg.label}-${scale} — ${station}`;
+    const label = index === "pdsi" ? `${cfg.label} — ${station}` : `${cfg.label}-${scale} — ${station}`;
+    document.getElementById("chart-series").setAttribute("aria-label", `Gráfico da evolução mensal: ${label}`);
 
     if (chart) {
       chart.data.labels = labels;
@@ -83,12 +111,23 @@ const ChartsModule = (() => {
       chart.options.scales.y.suggestedMin = cfg.suggestedMin;
       chart.options.scales.y.suggestedMax = cfg.suggestedMax;
       chart.options.plugins.annotation.annotations = cfg.annotations;
+      applyCursor();
       chart.update();
       return;
     }
 
     const ctx = document.getElementById("chart-series").getContext("2d");
+    const firstCursor = cursorDate;
     chart = new Chart(ctx, {
+      // onHover não corre fora da área do gráfico e deixaria o cursor preso.
+      plugins: [
+        {
+          id: "pickCursor",
+          afterEvent(instance, args) {
+            instance.canvas.style.cursor = args.inChartArea && canPickDate() ? "pointer" : "default";
+          },
+        },
+      ],
       type: "line",
       data: {
         labels,
@@ -108,6 +147,13 @@ const ChartsModule = (() => {
       options: {
         responsive: true,
         animation: false,
+        onClick: (event, _elements, instance) => {
+          // Nas bordas da área, o eixo devolve -1 ou n: o clique é o primeiro ou o último mês.
+          const last = instance.data.labels.length - 1;
+          const position = Math.min(Math.max(instance.scales.x.getValueForPixel(event.x), 0), last);
+          const date = instance.data.labels[position];
+          if (date && onDatePicked) onDatePicked(date);
+        },
         scales: {
           x: {
             type: "category",
@@ -144,12 +190,16 @@ const ChartsModule = (() => {
           },
         },
         plugins: {
-          legend: { display: true, labels: { color: WARM_NEUTRAL_TEXT } },
+          legend: { display: true, onClick: () => {}, labels: { color: WARM_NEUTRAL_TEXT } },
           annotation: { annotations: cfg.annotations },
         },
       },
     });
+    if (firstCursor) {
+      applyCursor();
+      chart.update("none");
+    }
   }
 
-  return { render };
+  return { render, setCursor, setDateHandler };
 })();

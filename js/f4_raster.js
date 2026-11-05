@@ -51,7 +51,6 @@ const RasterModule = (() => {
   let currentLayer = null;
 
   async function fetchMeta(path) {
-    // SHOWCASE: cada rota é um ficheiro .json pré-gerado (ver f1_config.js).
     const res = await fetch(`${APP.API_BASE}${path}.json`);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
@@ -108,6 +107,9 @@ const RasterModule = (() => {
     });
 
     MapModule.setRasterLayer(currentLayer);
+    // As isobandas só têm informação ao passar o rato: fora da ordem de Tab,
+    // o teclado não tem de atravessar dezenas de polígonos sem nome.
+    currentLayer.eachLayer((band) => band.getElement()?.setAttribute("tabindex", "-1"));
   }
 
   // SPI/SPEI/scPDSI climatológico (frequência de seca — §18) e "Risco

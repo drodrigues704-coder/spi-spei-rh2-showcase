@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Atlas histórico da seca na Região Hidrográfica 2 (Cávado, Ave e Leça), 1995–2025.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23221b14'/%3E%3Cpath d='M2 11h3V7h3v5h3V4h3' fill='none' stroke='%23cc7a3d' stroke-width='1.8'/%3E%3C/svg%3E">
 <title>Atlas de Seca — Região Hidrográfica 2 (Cávado / Ave / Leça)</title>
 <meta name="theme-color" content="#221b14">
 
@@ -10,16 +12,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="CSS/style.css?v=27" />
+<link rel="stylesheet" href="CSS/style.css?v=31" />
 </head>
 <body>
 
 <header id="app-header">
-  <button id="btn-menu" type="button" title="Abrir/fechar controlos" aria-label="Abrir/fechar controlos">☰</button>
+  <button id="btn-menu" type="button" title="Abrir/fechar controlos" aria-label="Abrir/fechar controlos" aria-expanded="false" aria-controls="sidebar"><svg class="icon-open" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><svg class="icon-close" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
   <h1>Atlas de Seca <span class="h1-full">— Região Hidrográfica 2 (Cávado / Ave / Leça)</span><span class="h1-short">· RH2</span></h1>
   <span id="app-subtitle">SPI, SPEI e scPDSI · 1995–2025</span>
-  <button id="btn-basemap" type="button" title="Trocar mapa de fundo">🗺 Mapa: Escuro</button>
-  <button id="btn-info" type="button" title="Sobre a app e os índices">ℹ Sobre</button>
+  <button id="btn-basemap" type="button" title="Trocar mapa de fundo">Mapa: Escuro</button>
+  <button id="btn-info" type="button" title="Sobre a app e os índices">Sobre</button>
 </header>
 
 <div id="app">
@@ -29,8 +31,8 @@
   <aside id="sidebar">
 
     <section class="panel">
-      <h2>Estação</h2>
-      <select id="ctl-station"><option value="">A carregar…</option></select>
+      <h2 id="station-heading">Estação</h2>
+      <select id="ctl-station" aria-labelledby="station-heading"><option value="">A carregar…</option></select>
       <div id="station-meta"></div>
     </section>
 
@@ -126,7 +128,7 @@
         <label><input type="radio" name="chart-source" value="station" checked> Esta estação</label>
         <label><input type="radio" name="chart-source" value="rh2"> RH2 (média)</label>
       </div>
-      <canvas id="chart-series" height="220"></canvas>
+      <canvas id="chart-series" height="220" role="img" aria-label="Gráfico de evolução do índice"></canvas>
       <div id="chart-export">
         <button id="btn-export-png" type="button" disabled title="Exportação desativada">Exportar PNG</button>
         <button id="btn-export-csv" type="button" disabled title="Exportação desativada">Exportar CSV</button>
@@ -138,13 +140,13 @@
 </div>
 
 <div id="loading-overlay" hidden><div class="spinner"></div></div>
-<div id="error-banner" hidden></div>
+<div id="error-banner" role="alert" hidden></div>
 
-<div id="info-modal" hidden>
+<div id="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-modal-title" hidden>
   <div id="info-modal-card">
-    <button id="btn-info-close" type="button" aria-label="Fechar">✕</button>
+    <button id="btn-info-close" type="button" aria-label="Fechar"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
 
-    <h2>Sobre esta app</h2>
+    <h2 id="info-modal-title">Sobre esta app</h2>
     <p>
       Atlas histórico da seca na <b>RH2</b> — Região
       Hidrográfica do Cávado, Ave e Leça (noroeste de Portugal Continental),
@@ -236,7 +238,7 @@
       zonas). Para o <b>Risco composto — SPEI</b>, o índice composto
       (frequência, severidade e recorrência da seca, 0 a 1) a
       partir do SPEI na escala escolhida; a escala 48 dá exatamente o mesmo
-      valor que os marcadores das estações (a referência fixa, ver abaixo).
+      valor que o índice de risco indicado em cada estação (a referência fixa, ver abaixo).
     </p>
     <p>
       Escolher um mês mostra a interpolação espacial do valor real do índice
@@ -291,15 +293,14 @@
       resumo, sem evolução mês a mês própria): a faixa dá lugar a um botão
       para ver o índice de base e o gráfico mostra, em alternativa, a série
       que alimenta esse risco (SPI ou scPDSI). Os <b>marcadores das
-      estações</b> mostram sempre o valor
-      de referência (SPEI-48), independentemente do que estiver
-      selecionado no mapa.
+      estações</b> são neutros e só destacam a estação selecionada; o índice
+      de risco de referência (SPEI-48) aparece ao abrir cada estação.
     </p>
 
     <h3>Limitações a ter em conta</h3>
     <ul>
       <li>37 das 48 estações da RH2 com precipitação e temperatura simultâneas têm dados suficientes para os índices (as restantes não cumprem os critérios mínimos de completude).</li>
-      <li>Os índices assentam nos valores observados nas estações do SNIRH, que nunca são alterados. Nos meses sem observação válida (menos de 80% dos dias com registo, ou excluídos pelo controlo de qualidade), cerca de 36% do total, a precipitação é estimada com a reanálise CERRA-Land, ajustada ao nível local de cada estação, e esses meses estão assinalados. Entre 2010 e 2014 e em 2017–18 quase não há observações, por isso os valores desses anos são sobretudo reconstruídos.</li>
+      <li>Os índices assentam nos valores observados nas estações do SNIRH, que nunca são alterados. Nos meses sem observação válida (menos de 80% dos dias com registo, ou excluídos pelo controlo de qualidade), cerca de 36% do total, a precipitação é estimada com a reanálise CERRA-Land, ajustada ao nível local de cada estação, e esses meses estão assinalados. Entre 2010 e 2014, em 2017–18 e em boa parte de 2025 quase não há observações, por isso os valores desses anos são sobretudo reconstruídos.</li>
       <li>Entre 2001 e 2009, a maioria das estações passa a registar menos cerca de um terço da precipitação face às normais do IPMA próximas. A causa está por confirmar. Os valores observados não foram alterados: no SPI e no SPEI, cada estação é comparada com o seu próprio período antes e depois dessa mudança. Por isso, estes índices mostram secas relativas a cada período, mas não servem para ler tendências de longo prazo. O scPDSI não tem este ajuste.</li>
       <li>SPI, SPEI e índice de risco atingem agora os ≥30 anos de registo recomendados pela OMM (1995–2025) — mas ainda com cautela nas escalas 24/48 meses perto do início da série.</li>
       <li>Um mês é excluído quando a estação regista zero em dias de chuva forte nas estações vizinhas. Excluem-se também 53 meses da estação Gralhós (03K/02UG), entre 1997 e 2002, porque repetem os valores da estação Zebral (04I/03UG).</li>
@@ -408,14 +409,14 @@
      isto, uma alteração a estes scripts só aparecia depois de o
      utilizador limpar a cache manualmente. Subir este número sempre
      que qualquer um destes ficheiros for alterado. -->
-<script src="js/f1_config.js?v=27"></script>
-<script src="js/f2_map.js?v=27"></script>
-<script src="js/f3_controls.js?v=27"></script>
-<script src="js/f4_raster.js?v=27"></script>
-<script src="js/f5_charts.js?v=27"></script>
-<script src="js/f6_ui.js?v=27"></script>
-<script src="js/f8_timeline.js?v=27"></script>
-<script src="js/f7_main.js?v=27"></script>
+<script src="js/f1_config.js?v=31"></script>
+<script src="js/f2_map.js?v=31"></script>
+<script src="js/f3_controls.js?v=31"></script>
+<script src="js/f4_raster.js?v=31"></script>
+<script src="js/f5_charts.js?v=31"></script>
+<script src="js/f6_ui.js?v=31"></script>
+<script src="js/f8_timeline.js?v=31"></script>
+<script src="js/f7_main.js?v=31"></script>
 
 </body>
 </html>

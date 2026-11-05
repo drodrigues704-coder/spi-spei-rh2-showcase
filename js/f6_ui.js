@@ -66,10 +66,13 @@ const UIModule = (() => {
     overlay.hidden = true;
   }
 
+  let errorTimer = null;
+
   function showError(message) {
-    errorBanner.textContent = `⚠ ${message}`;
+    errorBanner.textContent = message;
     errorBanner.hidden = false;
-    setTimeout(() => (errorBanner.hidden = true), 6000);
+    clearTimeout(errorTimer);
+    errorTimer = setTimeout(() => (errorBanner.hidden = true), 6000);
   }
 
   // "risco" é o "Risco (composto)" de sempre — marcadores das estações
@@ -130,17 +133,40 @@ const UIModule = (() => {
       .join(", ");
     legendEl.innerHTML = `
       <div class="legend-bar" style="background: linear-gradient(90deg, ${gradient});"></div>
-      <div class="legend-labels"><span>${valueMin} (seca extrema)</span><span>${label}</span><span>+${valueMax} (muito húmido)</span></div>
+      <div class="legend-labels"><span>${valueMin} (seca extrema)</span><span>${label}</span><span>+${valueMax} (extr. húmido)</span></div>
     `;
   }
 
-  function showInfo() {
-    infoModal.hidden = false;
-  }
+  let focusBeforeInfo = null;
 
-  function hideInfo() {
-    infoModal.hidden = true;
+  function showInfo() {
+    focusBeforeInfo = document.activeElement;
+    infoModal.hidden = false;
+    btnInfoClose.focus();
   }
+  function hideInfo() {
+    if (infoModal.hidden) return;
+    infoModal.hidden = true;
+    focusBeforeInfo?.focus();
+  }
+  // O Tab fica dentro do modal enquanto está aberto.
+  // Fica no documento porque um clique no texto deixa o foco fora do modal.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab" || infoModal.hidden) return;
+    const stops = [...infoModal.querySelectorAll("button, a[href]")];
+    const first = stops[0];
+    const last = stops[stops.length - 1];
+    if (!infoModal.contains(document.activeElement)) {
+      e.preventDefault();
+      (e.shiftKey ? last : first).focus();
+    } else if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
 
   function wireInfoModal() {
     btnInfo.addEventListener("click", showInfo);
@@ -149,7 +175,9 @@ const UIModule = (() => {
       if (e.target === infoModal) hideInfo(); // clicar fora do cartão fecha
     });
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !infoModal.hidden) hideInfo();
+      if (e.key !== "Escape" || infoModal.hidden) return;
+      e.stopImmediatePropagation(); // um Escape fecha só o modal, não a gaveta por baixo
+      hideInfo();
     });
   }
 
@@ -162,13 +190,23 @@ const UIModule = (() => {
   function openSidebar() {
     sidebar.classList.add("open");
     sidebarBackdrop.hidden = false;
-    btnMenu.textContent = "✕";
+    btnMenu.setAttribute("aria-expanded", "true");
+    syncDrawerFocus();
+    document.getElementById("ctl-station").focus();
   }
 
   function closeSidebar() {
+    const wasOpen = sidebar.classList.contains("open");
     sidebar.classList.remove("open");
     sidebarBackdrop.hidden = true;
-    btnMenu.textContent = "☰";
+    btnMenu.setAttribute("aria-expanded", "false");
+    syncDrawerFocus();
+    if (wasOpen) btnMenu.focus();
+  }
+
+  // Gaveta fechada em mobile: os controlos fora do ecrã saem da ordem de Tab.
+  function syncDrawerFocus() {
+    sidebar.inert = mobileLayout.matches && !sidebar.classList.contains("open");
   }
 
   function wireSidebarDrawer() {
@@ -183,12 +221,14 @@ const UIModule = (() => {
 
     // Sem isto: abrir a gaveta em mobile, rodar o ecrã (ou redimensionar
     // a janela) para desktop e voltar a estreitar deixava a classe
-    // "open"/o ícone "✕" pendurados de uma sessão anterior, sem o
+    // "open"/o ícone de fechar pendurados de uma sessão anterior, sem o
     // utilizador ter clicado em nada (achado no code review, não
     // hipotético) — sair do breakpoint mobile fecha sempre a gaveta.
-    window.matchMedia("(max-width: 768px)").addEventListener("change", (e) => {
+    mobileLayout.addEventListener("change", (e) => {
       if (!e.matches) closeSidebar();
+      syncDrawerFocus();
     });
+    syncDrawerFocus();
   }
 
   wireSidebarDrawer();
